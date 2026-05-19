@@ -1,0 +1,283 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* CityGPT Smart City Command Center - Dark by default */
+    --background: 220 50% 5%;
+    --foreground: 195 100% 92%;
+
+    --card: 220 45% 8%;
+    --card-foreground: 195 100% 92%;
+
+    --popover: 220 45% 8%;
+    --popover-foreground: 195 100% 92%;
+
+    /* Cyan primary */
+    --primary: 188 95% 55%;
+    --primary-foreground: 220 60% 6%;
+    --primary-glow: 188 100% 65%;
+
+    --secondary: 220 40% 14%;
+    --secondary-foreground: 195 80% 92%;
+
+    --muted: 220 30% 12%;
+    --muted-foreground: 210 25% 65%;
+
+    /* Gold accent */
+    --accent: 42 95% 60%;
+    --accent-foreground: 220 60% 6%;
+
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 145 80% 50%;
+    --warning: 35 95% 58%;
+    --danger: 355 90% 60%;
+
+    --border: 195 60% 25% / 0.35;
+    --input: 220 40% 14%;
+    --ring: 188 95% 55%;
+
+    --radius: 0.75rem;
+
+    /* Gradients */
+    --gradient-bg: radial-gradient(ellipse at top, hsl(210 70% 12%) 0%, hsl(220 50% 5%) 60%, hsl(225 60% 3%) 100%);
+    --gradient-panel: linear-gradient(135deg, hsl(220 45% 10% / 0.85), hsl(220 50% 7% / 0.85));
+    --gradient-primary: linear-gradient(135deg, hsl(188 95% 55%), hsl(210 90% 55%));
+    --gradient-gold: linear-gradient(135deg, hsl(42 95% 60%), hsl(35 95% 50%));
+    --gradient-danger: linear-gradient(135deg, hsl(0 90% 60%), hsl(20 95% 55%));
+    --gradient-hero: linear-gradient(135deg, hsl(188 95% 55%) 0%, hsl(210 90% 60%) 50%, hsl(42 95% 60%) 100%);
+
+    /* Shadows / glows */
+    --glow-cyan: 0 0 30px hsl(188 95% 55% / 0.4), 0 0 60px hsl(188 95% 55% / 0.15);
+    --glow-gold: 0 0 25px hsl(42 95% 60% / 0.45);
+    --glow-danger: 0 0 25px hsl(0 90% 60% / 0.5);
+    --shadow-panel: 0 8px 32px hsl(220 80% 2% / 0.6), inset 0 1px 0 hsl(195 100% 80% / 0.06);
+
+    --grid-color: hsl(188 80% 50% / 0.08);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html, body, #root {
+    @apply min-h-screen;
+  }
+  body {
+    @apply text-foreground antialiased;
+    background: var(--gradient-bg);
+    font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
+    background-attachment: fixed;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+  #root { position: relative; z-index: 1; }
+}
+
+@layer components {
+  .panel {
+    background: var(--gradient-panel);
+    border: 1px solid hsl(var(--primary) / 0.2);
+    box-shadow: var(--shadow-panel);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius);
+    position: relative;
+  }
+  .panel-glow {
+    box-shadow: var(--shadow-panel), var(--glow-cyan);
+  }
+  .panel-corners::before,
+  .panel-corners::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: hsl(var(--primary));
+    pointer-events: none;
+  }
+  .panel-corners::before {
+    top: -1px; left: -1px;
+    border-top: 2px solid; border-left: 2px solid;
+    border-top-left-radius: var(--radius);
+  }
+  .panel-corners::after {
+    bottom: -1px; right: -1px;
+    border-bottom: 2px solid; border-right: 2px solid;
+    border-bottom-right-radius: var(--radius);
+  }
+  .tech-label {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    color: hsl(var(--primary) / 0.8);
+  }
+  .glow-text-cyan {
+    color: hsl(var(--primary));
+    text-shadow: 0 0 12px hsl(var(--primary) / 0.6);
+  }
+  .glow-text-gold {
+    color: hsl(var(--accent));
+    text-shadow: 0 0 12px hsl(var(--accent) / 0.6);
+  }
+  .scanline {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 0%, hsl(var(--primary) / 0.18) 50%, transparent 100%);
+    height: 40%;
+    animation: scan 3.5s ease-in-out infinite;
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+  .radar-sweep {
+    position: absolute; inset: 0;
+    background: conic-gradient(from 0deg, transparent 0deg, hsl(var(--primary) / 0.35) 30deg, transparent 60deg);
+    animation: sweep 4s linear infinite;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .glow-border {
+    position: relative;
+    z-index: 0;
+  }
+  .glow-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(
+      from var(--angle, 0deg),
+      transparent 0deg,
+      hsl(var(--primary) / 0.9) 60deg,
+      hsl(var(--primary-glow) / 0.6) 110deg,
+      transparent 180deg,
+      transparent 360deg
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: border-spin 3.5s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+  @property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+}
+
+@keyframes border-spin {
+  to { --angle: 360deg; }
+}
+
+@layer utilities {
+  .text-gradient-hero {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-gradient-cyan {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .text-gradient-gold {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(250%); opacity: 0; }
+}
+@keyframes sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.5); }
+  50% { box-shadow: 0 0 0 12px hsl(var(--primary) / 0); }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes sweep-x {
+  0% { transform: translateX(-30%); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateX(130%); opacity: 0; }
+}
+@keyframes scan-y {
+  0% { transform: translateY(-20%); opacity: 0; }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.9; }
+  100% { transform: translateY(120%); opacity: 0; }
+}
+@keyframes float-up {
+  0% { transform: translateY(8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes grid-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@keyframes grid-drift {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 24px 24px, 24px 24px; }
+}
+@keyframes grid-scan {
+  0% { transform: translateY(-30%); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(130%); opacity: 0; }
+}
+@keyframes tw-map-scan {
+  0% { transform: translateY(-40px); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(320px); opacity: 0; }
+}
+@keyframes tw-focus-scan {
+  0% { transform: translateY(-30px); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(320px); opacity: 0; }
+}
+@keyframes tw-focus-stroke {
+  0%, 100% { stroke-opacity: 0.55; stroke-width: 0.8; }
+  50% { stroke-opacity: 1; stroke-width: 1.4; }
+}
+@keyframes tw-focus-ring {
+  0% { r: 4; opacity: 0.8; }
+  100% { r: 22; opacity: 0; }
+}
