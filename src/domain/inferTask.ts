@@ -44,7 +44,7 @@ export function inferTask(description: string): SchedulerTask {
         outputLabel: 'AI 摘要結果',
         fields: {
           rules:
-            '每則新聞需包含標題、來源、摘要、影響與後續關注；不得猜測或補造資訊。',
+            '整理新聞標題、來源、重點摘要、影響層面與建議追蹤事項；資料不足時明確標示，不自行推測。',
         },
       },
       {
