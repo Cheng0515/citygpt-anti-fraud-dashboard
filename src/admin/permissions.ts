@@ -22,7 +22,7 @@ const ROLE_ACCESS: Readonly<Record<AdminRole, RoleAccess>> = {
   },
   auditor: {
     pages: ['audit', 'stats'],
-    permissions: ['audit.view', 'stats.view'],
+    permissions: ['audit.view'],
   },
   analyst: {
     pages: ['stats', 'feedback'],
