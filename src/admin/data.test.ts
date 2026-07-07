@@ -29,6 +29,9 @@ describe('admin sample data', () => {
     expect(new Set(adminUsers.map((user) => user.status))).toEqual(
       new Set(['active', 'suspended', 'invited']),
     )
+    expect(new Set(adminUsers.map((user) => user.role))).toEqual(
+      new Set(['user', 'admin']),
+    )
 
     expect(knowledgeDocuments.length).toBeGreaterThanOrEqual(7)
     expect(knowledgeDocuments).toContainEqual(

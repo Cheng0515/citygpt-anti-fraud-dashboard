@@ -76,6 +76,7 @@ const pageMeta: Record<
 }
 
 const roleLabels: Record<AdminRole, string> = {
+  user: '一般USER',
   admin: '管理者',
 }
 
@@ -309,7 +310,7 @@ function UsersPage({
     name: '',
     email: '',
     department: '民政處',
-    role: 'admin' as AdminRole,
+    role: 'user' as AdminRole,
   })
   const canManage = can(role, 'users.manage')
 
@@ -340,8 +341,20 @@ function UsersPage({
     setUsers((current) => [next, ...current])
     setSelectedUser(next)
     setAdding(false)
-    setDraft({ name: '', email: '', department: '民政處', role: 'admin' })
+    setDraft({ name: '', email: '', department: '民政處', role: 'user' })
     setNotice(`已建立 ${next.name}，並寄出邀請。`)
+  }
+
+  const updateRole = (target: AdminUser, nextRole: AdminRole) => {
+    setUsers((current) =>
+      current.map((user) => (user.id === target.id ? { ...user, role: nextRole } : user)),
+    )
+    setSelectedUser({ ...target, role: nextRole })
+    setNotice(
+      nextRole === 'admin'
+        ? `${target.name} 已設為管理者，可進入後臺。`
+        : `${target.name} 已設為一般USER，不可進入後臺。`,
+    )
   }
 
   const suspend = () => {
@@ -362,7 +375,7 @@ function UsersPage({
         {!canManage && <EmptyPermission label="管理使用者" />}
         <Panel
           title="使用者清單"
-          subtitle="後臺准入只保留「管理者」一種權限；非管理者不列入後臺帳號。"
+          subtitle="角色只分成一般USER與管理者；只有管理者能進入後臺。"
           action={
             <button
               type="button"
@@ -456,8 +469,9 @@ function UsersPage({
               後臺權限
               <select
                 value={selectedUser.role}
-                disabled
+                disabled={!canManage}
                 aria-describedby="admin-only-permission-note"
+                onChange={(event) => updateRole(selectedUser, event.target.value as AdminRole)}
               >
                 {Object.entries(roleLabels).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -479,7 +493,7 @@ function UsersPage({
             </div>
             <p id="admin-only-permission-note" className="admin-permission-note">
               <ShieldCheck size={16} />
-              後臺入口只接受管理者權限；稽核、知識維護與統計等職責都由管理者在同一後臺內處理。
+              一般USER 只能使用前台服務；管理者才能進入後臺並操作所有治理功能。
             </p>
           </>
         ) : (
@@ -517,8 +531,9 @@ function UsersPage({
               後臺權限
               <select
                 value={draft.role}
-                disabled
+                disabled={!canManage}
                 aria-describedby="admin-only-create-note"
+                onChange={(event) => setDraft({ ...draft, role: event.target.value as AdminRole })}
               >
                 {Object.entries(roleLabels).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -527,7 +542,7 @@ function UsersPage({
                 ))}
               </select>
               <small id="admin-only-create-note">
-                後臺帳號只建立為管理者；一般使用者不會出現在此清單。
+                預設建立一般USER；需要後臺權限時再改成管理者。
               </small>
             </label>
             <div className="admin-modal-actions">

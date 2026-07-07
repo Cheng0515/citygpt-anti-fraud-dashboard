@@ -1,4 +1,4 @@
-export type AdminRole = 'admin'
+export type AdminRole = 'user' | 'admin'
 
 export type AdminPage = 'users' | 'knowledge' | 'audit' | 'stats' | 'feedback'
 

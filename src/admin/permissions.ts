@@ -8,6 +8,10 @@ interface RoleAccess {
 const freezeList = <T extends string>(items: readonly T[]) => Object.freeze([...items])
 
 const ROLE_ACCESS: Readonly<Record<AdminRole, RoleAccess>> = Object.freeze({
+  user: Object.freeze({
+    pages: freezeList<AdminPage>([]),
+    permissions: freezeList<Permission>([]),
+  }),
   admin: Object.freeze({
     pages: freezeList<AdminPage>([
       'users',

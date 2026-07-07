@@ -14,10 +14,18 @@ const permissions: readonly Permission[] = [
 const expectedPermissions: Readonly<
   Record<AdminRole, readonly Permission[]>
 > = {
+  user: [],
   admin: permissions,
 }
 
 describe('admin permissions', () => {
+  it('keeps general users out of the management backend', () => {
+    expect(allowedPages('user')).toEqual([])
+    for (const permission of permissions) {
+      expect(can('user', permission), permission).toBe(false)
+    }
+  })
+
   it('grants the single administrator role access to every admin page', () => {
     expect(allowedPages('admin')).toEqual([
       'users',
@@ -42,10 +50,11 @@ describe('admin permissions', () => {
   })
 
   it('prevents consumers from mutating internal navigation rules', () => {
-    const pages = allowedPages('admin')
+    const pages = allowedPages('user')
 
     expect(Object.isFrozen(pages)).toBe(true)
     expect(() => (pages as AdminPage[]).push('users')).toThrow(TypeError)
+    expect(allowedPages('user')).toEqual([])
     expect(allowedPages('admin')).toEqual([
       'users',
       'knowledge',
