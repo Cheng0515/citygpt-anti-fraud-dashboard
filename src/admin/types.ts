@@ -13,6 +13,17 @@ export type Permission =
   | 'stats.view'
   | 'feedback.manage'
 
+export type PermissionDecision =
+  | {
+      readonly decision: 'allowed'
+      readonly permission: Permission
+    }
+  | {
+      readonly decision: 'denied'
+      readonly permission: Permission
+      readonly reason: string
+    }
+
 export interface AdminUser {
   readonly id: string
   readonly name: string
@@ -48,7 +59,7 @@ export interface AuditEvent {
   readonly traceId: string
   readonly before: Readonly<Record<string, unknown>> | null
   readonly after: Readonly<Record<string, unknown>> | null
-  readonly permissionDecision: string
+  readonly permissionDecision: PermissionDecision
 }
 
 export interface UsageTrendPoint {

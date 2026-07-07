@@ -5,30 +5,42 @@ interface RoleAccess {
   readonly permissions: readonly Permission[]
 }
 
-const ROLE_ACCESS: Readonly<Record<AdminRole, RoleAccess>> = {
-  system_admin: {
-    pages: ['users', 'knowledge', 'audit', 'stats', 'feedback'],
-    permissions: [
+const freezeList = <T extends string>(items: readonly T[]) => Object.freeze([...items])
+
+const ROLE_ACCESS: Readonly<Record<AdminRole, RoleAccess>> = Object.freeze({
+  system_admin: Object.freeze({
+    pages: freezeList<AdminPage>([
+      'users',
+      'knowledge',
+      'audit',
+      'stats',
+      'feedback',
+    ]),
+    permissions: freezeList<Permission>([
       'users.manage',
       'knowledge.manage',
       'audit.view',
       'stats.view',
       'feedback.manage',
-    ],
-  },
-  knowledge_admin: {
-    pages: ['knowledge', 'stats', 'feedback'],
-    permissions: ['knowledge.manage', 'stats.view', 'feedback.manage'],
-  },
-  auditor: {
-    pages: ['audit', 'stats'],
-    permissions: ['audit.view'],
-  },
-  analyst: {
-    pages: ['stats', 'feedback'],
-    permissions: ['stats.view'],
-  },
-}
+    ]),
+  }),
+  knowledge_admin: Object.freeze({
+    pages: freezeList<AdminPage>(['knowledge', 'stats', 'feedback']),
+    permissions: freezeList<Permission>([
+      'knowledge.manage',
+      'stats.view',
+      'feedback.manage',
+    ]),
+  }),
+  auditor: Object.freeze({
+    pages: freezeList<AdminPage>(['audit', 'stats']),
+    permissions: freezeList<Permission>(['audit.view', 'stats.view']),
+  }),
+  analyst: Object.freeze({
+    pages: freezeList<AdminPage>(['stats', 'feedback']),
+    permissions: freezeList<Permission>(['stats.view']),
+  }),
+})
 
 export function allowedPages(role: AdminRole): readonly AdminPage[] {
   return ROLE_ACCESS[role].pages

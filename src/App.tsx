@@ -29,11 +29,13 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import AdminApp from './admin/AdminApp'
 import { inferTask } from './domain/inferTask'
 import type { SchedulerTask, TaskStatus } from './domain/scheduler'
 import { validateTask } from './domain/validation'
 
 type View = 'list' | 'builder'
+type Surface = 'scheduler' | 'admin'
 type SampleTask = {
   id: string
   name: string
@@ -75,7 +77,7 @@ function Modal({ title, children, onClose, className = '' }: { title: string; ch
   )
 }
 
-function TaskList({ onCreate, onEdit }: { onCreate: () => void; onEdit: () => void }) {
+function TaskList({ onCreate, onEdit, onOpenAdmin }: { onCreate: () => void; onEdit: () => void; onOpenAdmin: () => void }) {
   const [tasks, setTasks] = useState(() => {
     const saved = localStorage.getItem('ai-scheduler-saved-task')
     return saved ? [JSON.parse(saved) as SampleTask, ...sampleTasks] : sampleTasks
@@ -96,7 +98,7 @@ function TaskList({ onCreate, onEdit }: { onCreate: () => void; onEdit: () => vo
 
   return (
     <main className="page-shell list-page">
-      <header className="topbar"><a className="brand" href="#" aria-label="CityGPT 首頁"><span className="brand-mark">C</span><span>CityGPT</span></a><div className="topbar-actions"><span className="environment">Prototype</span><span className="avatar">U1</span></div></header>
+      <header className="topbar"><a className="brand" href="#" aria-label="CityGPT 首頁"><span className="brand-mark">C</span><span>CityGPT</span></a><div className="topbar-actions"><button className="admin-entry-button" type="button" onClick={onOpenAdmin}>管理後臺</button><span className="environment">Prototype</span><span className="avatar">U1</span></div></header>
       <div className="content-wrap">
         <section className="hero-row">
           <div><p className="eyebrow">智慧自動化</p><h1>AI 任務排程</h1><p className="subtitle">用自然語言描述工作，AI 會幫你規劃流程、整理內容並準時完成。</p></div>
@@ -278,6 +280,5 @@ function Builder({ onBack, onSaved }: { onBack: () => void; onSaved: () => void 
 }
 
 export default function App() {
-  const [view, setView] = useState<View>('list')
-  return view === 'list' ? <TaskList onCreate={() => setView('builder')} onEdit={() => setView('builder')} /> : <Builder onBack={() => setView('list')} onSaved={() => setView('list')} />
+  return <AdminApp />
 }
