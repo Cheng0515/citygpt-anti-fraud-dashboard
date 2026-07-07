@@ -50,7 +50,7 @@ const pageMeta: Record<
 > = {
   users: {
     label: '使用者與權限',
-    description: '管理帳號、角色與停用風險',
+    description: '管理帳號、管理者權限與停用風險',
     icon: <UserCog size={18} />,
   },
   knowledge: {
@@ -76,10 +76,7 @@ const pageMeta: Record<
 }
 
 const roleLabels: Record<AdminRole, string> = {
-  system_admin: '系統管理員',
-  knowledge_admin: '知識管理員',
-  auditor: '稽核人員',
-  analyst: '分析人員',
+  admin: '管理者',
 }
 
 const permissionLabels: Record<Permission, string> = {
@@ -108,7 +105,7 @@ const indexStatusLabels: Record<KnowledgeDocument['indexStatus'], string> = {
 const accessLabels: Record<KnowledgeDocument['access'], string> = {
   public: '全府可用',
   department: '限處室',
-  restricted: '指定角色',
+  restricted: '指定對象',
 }
 
 const feedbackStatusLabels: Record<FeedbackItem['status'], string> = {
@@ -235,7 +232,7 @@ function EmptyPermission({ label }: { label: string }) {
     <div className="admin-permission-note">
       <Lock size={18} />
       <div>
-        <strong>目前角色沒有「{label}」權限</strong>
+        <strong>目前權限沒有「{label}」能力</strong>
         <span>你仍可檢視資料，但不能送出會改變後臺狀態的操作。</span>
       </div>
     </div>
@@ -312,7 +309,7 @@ function UsersPage({
     name: '',
     email: '',
     department: '民政處',
-    role: 'knowledge_admin' as AdminRole,
+    role: 'admin' as AdminRole,
   })
   const canManage = can(role, 'users.manage')
 
@@ -343,16 +340,8 @@ function UsersPage({
     setUsers((current) => [next, ...current])
     setSelectedUser(next)
     setAdding(false)
-    setDraft({ name: '', email: '', department: '民政處', role: 'knowledge_admin' })
+    setDraft({ name: '', email: '', department: '民政處', role: 'admin' })
     setNotice(`已建立 ${next.name}，並寄出邀請。`)
-  }
-
-  const updateRole = (target: AdminUser, nextRole: AdminRole) => {
-    setUsers((current) =>
-      current.map((user) => (user.id === target.id ? { ...user, role: nextRole } : user)),
-    )
-    setSelectedUser({ ...target, role: nextRole })
-    setNotice(`${target.name} 的角色已更新為 ${roleLabels[nextRole]}。`)
   }
 
   const suspend = () => {
@@ -373,7 +362,7 @@ function UsersPage({
         {!canManage && <EmptyPermission label="管理使用者" />}
         <Panel
           title="使用者清單"
-          subtitle="用處室、狀態與角色快速找到需要處理的帳號。"
+          subtitle="後臺准入只保留「管理者」一種權限；非管理者不列入後臺帳號。"
           action={
             <button
               type="button"
@@ -423,7 +412,7 @@ function UsersPage({
           <div className="admin-table user-table">
             <div className="admin-table-head">
               <span>使用者</span>
-              <span>角色</span>
+              <span>後臺權限</span>
               <span>狀態</span>
               <span>最後登入</span>
               <span>操作</span>
@@ -464,11 +453,11 @@ function UsersPage({
               {selectedUser.name} · {roleLabels[selectedUser.role]}
             </p>
             <label>
-              角色
+              後臺權限
               <select
                 value={selectedUser.role}
-                disabled={!canManage}
-                onChange={(event) => updateRole(selectedUser, event.target.value as AdminRole)}
+                disabled
+                aria-describedby="admin-only-permission-note"
               >
                 {Object.entries(roleLabels).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -488,6 +477,10 @@ function UsersPage({
                 </span>
               ))}
             </div>
+            <p id="admin-only-permission-note" className="admin-permission-note">
+              <ShieldCheck size={16} />
+              後臺入口只接受管理者權限；稽核、知識維護與統計等職責都由管理者在同一後臺內處理。
+            </p>
           </>
         ) : (
           <p>請先選擇一位使用者。</p>
@@ -521,10 +514,11 @@ function UsersPage({
               />
             </label>
             <label>
-              角色
+              後臺權限
               <select
                 value={draft.role}
-                onChange={(event) => setDraft({ ...draft, role: event.target.value as AdminRole })}
+                disabled
+                aria-describedby="admin-only-create-note"
               >
                 {Object.entries(roleLabels).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -532,6 +526,9 @@ function UsersPage({
                   </option>
                 ))}
               </select>
+              <small id="admin-only-create-note">
+                後臺帳號只建立為管理者；一般使用者不會出現在此清單。
+              </small>
             </label>
             <div className="admin-modal-actions">
               <button type="button" onClick={() => setAdding(false)}>
@@ -741,7 +738,7 @@ function KnowledgePage({
               >
                 <option value="public">全府可用</option>
                 <option value="department">限處室</option>
-                <option value="restricted">指定角色</option>
+                <option value="restricted">指定對象</option>
               </select>
             </label>
             <dl className="admin-detail-list">
@@ -1455,7 +1452,7 @@ function FeedbackPage({
 }
 
 export default function AdminApp({ onExit }: { onExit?: () => void }) {
-  const [role, setRole] = useState<AdminRole>('system_admin')
+  const role: AdminRole = 'admin'
   const [page, setPage] = useState<AdminPage>('users')
   const [notice, setNotice] = useState('')
   const [users, setUsers] = useState<AdminUser[]>(() => adminUsers.map((user) => ({ ...user })))
@@ -1525,16 +1522,10 @@ export default function AdminApp({ onExit }: { onExit?: () => void }) {
             <p>{currentPage.description}</p>
           </div>
           <div className="admin-topbar-actions">
-            <label>
-              目前角色
-              <select value={role} onChange={(event) => setRole(event.target.value as AdminRole)}>
-                {Object.entries(roleLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <span className="security-badge">
+              <ShieldCheck size={16} />
+              後臺權限：管理者
+            </span>
             <span className="security-badge">
               <ShieldCheck size={16} />
               Local Prototype

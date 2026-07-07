@@ -7,7 +7,7 @@
 ## 本版包含頁面
 
 1. 使用者與權限
-   - 使用者清單、角色切換、權限矩陣、停用確認。
+   - 使用者清單、單一管理者權限、權限矩陣、停用確認。
 2. 知識代理人管理
    - 代理人清單、System Prompt、Guardrails、可使用對象、授權群組、發布 / 停用。
 3. 稽核日誌
@@ -68,11 +68,11 @@ pnpm test
 ## Mock 與 RD 對接假設
 
 - 目前所有資料都是前端 mock，不連後端 API。
-- 角色權限目前由 `src/admin/permissions.ts` 控制。
+- 後臺准入目前由 `src/admin/permissions.ts` 控制，只有 `admin`（管理者）能進入後臺。
 - Mock data 在 `src/admin/data.ts` 與 `src/admin/AdminApp.tsx`。
 - 互動狀態存在 React local state，重新整理後會回到初始資料。
 - 後續 API 建議拆成：
-  - users / roles / permission groups
+  - backend admin users / admin access gate
   - knowledge agents / prompt versions / release workflow
   - audit events
   - usage stats

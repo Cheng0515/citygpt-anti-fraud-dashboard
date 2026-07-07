@@ -1,8 +1,4 @@
-export type AdminRole =
-  | 'system_admin'
-  | 'knowledge_admin'
-  | 'auditor'
-  | 'analyst'
+export type AdminRole = 'admin'
 
 export type AdminPage = 'users' | 'knowledge' | 'audit' | 'stats' | 'feedback'
 

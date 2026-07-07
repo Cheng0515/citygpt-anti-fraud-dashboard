@@ -8,7 +8,7 @@ interface RoleAccess {
 const freezeList = <T extends string>(items: readonly T[]) => Object.freeze([...items])
 
 const ROLE_ACCESS: Readonly<Record<AdminRole, RoleAccess>> = Object.freeze({
-  system_admin: Object.freeze({
+  admin: Object.freeze({
     pages: freezeList<AdminPage>([
       'users',
       'knowledge',
@@ -23,22 +23,6 @@ const ROLE_ACCESS: Readonly<Record<AdminRole, RoleAccess>> = Object.freeze({
       'stats.view',
       'feedback.manage',
     ]),
-  }),
-  knowledge_admin: Object.freeze({
-    pages: freezeList<AdminPage>(['knowledge', 'stats', 'feedback']),
-    permissions: freezeList<Permission>([
-      'knowledge.manage',
-      'stats.view',
-      'feedback.manage',
-    ]),
-  }),
-  auditor: Object.freeze({
-    pages: freezeList<AdminPage>(['audit', 'stats']),
-    permissions: freezeList<Permission>(['audit.view', 'stats.view']),
-  }),
-  analyst: Object.freeze({
-    pages: freezeList<AdminPage>(['stats', 'feedback']),
-    permissions: freezeList<Permission>(['stats.view']),
   }),
 })
 
