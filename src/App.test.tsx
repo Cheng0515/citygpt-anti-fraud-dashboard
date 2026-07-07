@@ -32,6 +32,16 @@ describe('CityGPT admin demo', () => {
     }
   })
 
+  it('shows only the two role types without a detailed permission matrix', () => {
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: '角色設定' })).toBeInTheDocument()
+    expect(screen.getAllByText('一般USER').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('管理者').length).toBeGreaterThanOrEqual(1)
+    expect(screen.queryByRole('heading', { name: '有效權限' })).not.toBeInTheDocument()
+    expect(screen.queryByText('管理知識代理人')).not.toBeInTheDocument()
+  })
+
   it('lets RD demo the knowledge-agent creation flow', async () => {
     const user = userEvent.setup()
     render(<App />)

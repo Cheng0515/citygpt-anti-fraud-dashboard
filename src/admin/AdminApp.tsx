@@ -88,8 +88,6 @@ const permissionLabels: Record<Permission, string> = {
   'feedback.manage': '處理回饋',
 }
 
-const allPermissions = Object.keys(permissionLabels) as Permission[]
-
 const userStatusLabels: Record<AdminUser['status'], string> = {
   active: '啟用中',
   suspended: '已停用',
@@ -425,7 +423,7 @@ function UsersPage({
           <div className="admin-table user-table">
             <div className="admin-table-head">
               <span>使用者</span>
-              <span>後臺權限</span>
+              <span>權限類型</span>
               <span>狀態</span>
               <span>最後登入</span>
               <span>操作</span>
@@ -442,7 +440,7 @@ function UsersPage({
                 <div className="admin-row-actions">
                   <button type="button" onClick={() => setSelectedUser(user)}>
                     <Eye size={15} />
-                    權限
+                    角色
                   </button>
                   <button
                     type="button"
@@ -459,18 +457,17 @@ function UsersPage({
       </div>
 
       <aside className="admin-side-card">
-        <h2>有效權限</h2>
+        <h2>角色設定</h2>
         {selectedUser ? (
           <>
             <p>
               {selectedUser.name} · {roleLabels[selectedUser.role]}
             </p>
             <label>
-              後臺權限
+              權限類型
               <select
                 value={selectedUser.role}
                 disabled={!canManage}
-                aria-describedby="admin-only-permission-note"
                 onChange={(event) => updateRole(selectedUser, event.target.value as AdminRole)}
               >
                 {Object.entries(roleLabels).map(([value, label]) => (
@@ -480,20 +477,19 @@ function UsersPage({
                 ))}
               </select>
             </label>
-            <div className="permission-matrix">
-              {allPermissions.map((permission) => (
-                <span
-                  key={permission}
-                  className={can(selectedUser.role, permission) ? 'allowed' : 'denied'}
-                >
-                  {can(selectedUser.role, permission) ? <Check size={14} /> : <X size={14} />}
-                  {permissionLabels[permission]}
-                </span>
-              ))}
+            <div className="role-split" aria-label="角色權限說明">
+              <span className={selectedUser.role === 'user' ? 'active' : ''}>
+                <strong>一般USER</strong>
+                <small>使用前台服務，不可進入管理後臺。</small>
+              </span>
+              <span className={selectedUser.role === 'admin' ? 'active' : ''}>
+                <strong>管理者</strong>
+                <small>可進入管理後臺，管理全部功能。</small>
+              </span>
             </div>
-            <p id="admin-only-permission-note" className="admin-permission-note">
+            <p className="admin-permission-note">
               <ShieldCheck size={16} />
-              一般USER 只能使用前台服務；管理者才能進入後臺並操作所有治理功能。
+              系統只分這兩種權限，不再拆稽核員、知識維護者或分析人員。
             </p>
           </>
         ) : (
@@ -528,7 +524,7 @@ function UsersPage({
               />
             </label>
             <label>
-              後臺權限
+              權限類型
               <select
                 value={draft.role}
                 disabled={!canManage}
@@ -542,7 +538,7 @@ function UsersPage({
                 ))}
               </select>
               <small id="admin-only-create-note">
-                預設建立一般USER；需要後臺權限時再改成管理者。
+                預設建立一般USER；需要管理後臺時再改成管理者。
               </small>
             </label>
             <div className="admin-modal-actions">
@@ -1539,7 +1535,7 @@ export default function AdminApp({ onExit }: { onExit?: () => void }) {
           <div className="admin-topbar-actions">
             <span className="security-badge">
               <ShieldCheck size={16} />
-              後臺權限：管理者
+              目前權限：管理者
             </span>
             <span className="security-badge">
               <ShieldCheck size={16} />

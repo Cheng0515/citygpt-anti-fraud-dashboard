@@ -485,12 +485,12 @@ textarea:disabled {
   gap: 14px;
 }
 
-.permission-matrix {
+.role-split {
   display: grid;
   gap: 8px;
 }
 
-.permission-matrix span,
+.role-split span,
 .citation-list span,
 .error-row,
 .progress-row,
@@ -502,19 +502,28 @@ textarea:disabled {
   border: 1px solid #e4ecf8;
 }
 
-.permission-matrix span {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 800;
+.role-split span {
+  display: grid;
+  gap: 4px;
 }
 
-.permission-matrix .allowed {
-  color: #087443;
+.role-split strong {
+  color: #10233f;
 }
 
-.permission-matrix .denied {
-  color: #9aa5b8;
+.role-split small {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.role-split .active {
+  background: #eef6ff;
+  border-color: #8bc2ff;
+  box-shadow: 0 10px 22px rgba(35, 108, 242, 0.12);
+}
+
+.role-split .active strong {
+  color: #1457c9;
 }
 
 .admin-detail-list {
