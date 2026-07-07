@@ -386,6 +386,11 @@ textarea:disabled {
   align-items: center;
 }
 
+.user-table .admin-table-head,
+.user-table .admin-row {
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+}
+
 .knowledge-table .admin-table-head,
 .knowledge-table .admin-row {
   grid-template-columns: 2fr 1fr 1fr 1fr 1.7fr;
@@ -434,6 +439,16 @@ textarea:disabled {
   background: white;
   border-color: #d8e2f3;
   color: #28456f;
+}
+
+.admin-row-actions select {
+  min-height: 42px;
+  border-radius: 13px;
+  border: 1px solid #d8e2f3;
+  background: white;
+  color: #28456f;
+  font-weight: 900;
+  padding: 0 12px;
 }
 
 .admin-pill {
@@ -485,12 +500,6 @@ textarea:disabled {
   gap: 14px;
 }
 
-.role-split {
-  display: grid;
-  gap: 8px;
-}
-
-.role-split span,
 .citation-list span,
 .error-row,
 .progress-row,
@@ -500,30 +509,6 @@ textarea:disabled {
   border-radius: 14px;
   background: #f8fbff;
   border: 1px solid #e4ecf8;
-}
-
-.role-split span {
-  display: grid;
-  gap: 4px;
-}
-
-.role-split strong {
-  color: #10233f;
-}
-
-.role-split small {
-  color: #64748b;
-  font-weight: 700;
-}
-
-.role-split .active {
-  background: #eef6ff;
-  border-color: #8bc2ff;
-  box-shadow: 0 10px 22px rgba(35, 108, 242, 0.12);
-}
-
-.role-split .active strong {
-  color: #1457c9;
 }
 
 .admin-detail-list {

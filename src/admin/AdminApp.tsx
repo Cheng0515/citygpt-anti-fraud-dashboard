@@ -301,7 +301,6 @@ function UsersPage({
   const [query, setQuery] = useState('')
   const [unit, setUnit] = useState('all')
   const [status, setStatus] = useState<'all' | AdminUser['status']>('all')
-  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(users[0] ?? null)
   const [suspendTarget, setSuspendTarget] = useState<AdminUser | null>(null)
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState({
@@ -337,7 +336,6 @@ function UsersPage({
       lastLogin: null,
     }
     setUsers((current) => [next, ...current])
-    setSelectedUser(next)
     setAdding(false)
     setDraft({ name: '', email: '', department: '民政處', role: 'user' })
     setNotice(`已建立 ${next.name}，並寄出邀請。`)
@@ -347,7 +345,6 @@ function UsersPage({
     setUsers((current) =>
       current.map((user) => (user.id === target.id ? { ...user, role: nextRole } : user)),
     )
-    setSelectedUser({ ...target, role: nextRole })
     setNotice(
       nextRole === 'admin'
         ? `${target.name} 已設為管理者，可進入後臺。`
@@ -362,14 +359,13 @@ function UsersPage({
         user.id === suspendTarget.id ? { ...user, status: 'suspended' } : user,
       ),
     )
-    setSelectedUser({ ...suspendTarget, status: 'suspended' })
     setNotice(`${suspendTarget.name} 已停用，將不可登入 CityGPT 後臺。`)
     setSuspendTarget(null)
   }
 
   return (
     <div className="admin-grid">
-      <div className="admin-main-column">
+      <div className="admin-main-column full-width">
         {!canManage && <EmptyPermission label="管理使用者" />}
         <Panel
           title="使用者清單"
@@ -423,7 +419,6 @@ function UsersPage({
           <div className="admin-table user-table">
             <div className="admin-table-head">
               <span>使用者</span>
-              <span>權限類型</span>
               <span>狀態</span>
               <span>最後登入</span>
               <span>操作</span>
@@ -434,14 +429,21 @@ function UsersPage({
                   <strong>{user.name}</strong>
                   <small>{user.email}</small>
                 </div>
-                <span>{roleLabels[user.role]}</span>
                 <span className={`admin-pill ${user.status}`}>{userStatusLabels[user.status]}</span>
                 <span>{formatDateTime(user.lastLogin)}</span>
                 <div className="admin-row-actions">
-                  <button type="button" onClick={() => setSelectedUser(user)}>
-                    <Eye size={15} />
-                    角色
-                  </button>
+                  <select
+                    value={user.role}
+                    disabled={!canManage || user.status === 'suspended'}
+                    aria-label={`${user.name} 權限類型`}
+                    onChange={(event) => updateRole(user, event.target.value as AdminRole)}
+                  >
+                    {Object.entries(roleLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
                   <button
                     type="button"
                     disabled={!canManage || user.status === 'suspended'}
@@ -455,47 +457,6 @@ function UsersPage({
           </div>
         </Panel>
       </div>
-
-      <aside className="admin-side-card">
-        <h2>角色設定</h2>
-        {selectedUser ? (
-          <>
-            <p>
-              {selectedUser.name} · {roleLabels[selectedUser.role]}
-            </p>
-            <label>
-              權限類型
-              <select
-                value={selectedUser.role}
-                disabled={!canManage}
-                onChange={(event) => updateRole(selectedUser, event.target.value as AdminRole)}
-              >
-                {Object.entries(roleLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="role-split" aria-label="角色權限說明">
-              <span className={selectedUser.role === 'user' ? 'active' : ''}>
-                <strong>一般USER</strong>
-                <small>使用前台服務，不可進入管理後臺。</small>
-              </span>
-              <span className={selectedUser.role === 'admin' ? 'active' : ''}>
-                <strong>管理者</strong>
-                <small>可進入管理後臺，管理全部功能。</small>
-              </span>
-            </div>
-            <p className="admin-permission-note">
-              <ShieldCheck size={16} />
-              系統只分這兩種權限，不再拆稽核員、知識維護者或分析人員。
-            </p>
-          </>
-        ) : (
-          <p>請先選擇一位使用者。</p>
-        )}
-      </aside>
 
       {adding && (
         <Modal title="新增使用者" onClose={() => setAdding(false)}>

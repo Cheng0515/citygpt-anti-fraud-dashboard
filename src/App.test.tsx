@@ -32,13 +32,14 @@ describe('CityGPT admin demo', () => {
     }
   })
 
-  it('shows only the two role types without a detailed permission matrix', () => {
+  it('shows role dropdowns directly in user row actions', () => {
     render(<App />)
 
-    expect(screen.getByRole('heading', { name: '角色設定' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '角色設定' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '有效權限' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText('王小明 權限類型')).toBeInTheDocument()
     expect(screen.getAllByText('一般USER').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('管理者').length).toBeGreaterThanOrEqual(1)
-    expect(screen.queryByRole('heading', { name: '有效權限' })).not.toBeInTheDocument()
     expect(screen.queryByText('管理知識代理人')).not.toBeInTheDocument()
   })
 
