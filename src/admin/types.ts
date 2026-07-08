@@ -1,6 +1,6 @@
 export type AdminRole = 'user' | 'admin'
 
-export type AdminPage = 'users' | 'knowledge' | 'audit' | 'stats' | 'feedback'
+export type AdminPage = 'users' | 'audit' | 'stats' | 'feedback'
 
 export type Permission =
   | 'users.manage'
@@ -8,6 +8,7 @@ export type Permission =
   | 'audit.view'
   | 'stats.view'
   | 'feedback.manage'
+  | 'system.audit'
 
 export type PermissionDecision =
   | {
@@ -24,9 +25,8 @@ export interface AdminUser {
   readonly id: string
   readonly name: string
   readonly email: string
-  readonly department: string
   readonly role: AdminRole
-  readonly status: 'active' | 'suspended' | 'invited'
+  readonly status: 'active' | 'suspended'
   readonly lastLogin: string | null
 }
 
@@ -70,14 +70,8 @@ export interface KnowledgeBaseUsage {
   readonly satisfactionRate: number
 }
 
-export interface DepartmentUsage {
-  readonly department: string
-  readonly queries: number
-  readonly activeUsers: number
-}
-
-export interface ErrorSummary {
-  readonly code: string
+export interface NegativeFeedbackSummary {
+  readonly reason: string
   readonly count: number
   readonly description: string
 }
@@ -92,9 +86,12 @@ export interface UsageStats {
   }
   readonly trends: readonly UsageTrendPoint[]
   readonly popularKnowledgeBases: readonly KnowledgeBaseUsage[]
-  readonly departmentRanking: readonly DepartmentUsage[]
-  readonly unansweredRate: number
-  readonly errorSummaries: readonly ErrorSummary[]
+  readonly negativeFeedback: {
+    readonly count: number
+    readonly unresolved: number
+    readonly rate: number
+    readonly commonReasons: readonly NegativeFeedbackSummary[]
+  }
 }
 
 export interface FeedbackCitation {
@@ -112,9 +109,9 @@ export interface FeedbackContext {
 export interface FeedbackItem {
   readonly id: string
   readonly sentiment: 'positive' | 'negative'
+  readonly rating: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
   readonly question: string
   readonly answer: string
-  readonly department: string
   readonly knowledgeBase: string
   readonly tags: readonly string[]
   readonly status: 'pending' | 'in_progress' | 'completed' | 'ignored'

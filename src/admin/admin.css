@@ -475,7 +475,6 @@ textarea:disabled {
   color: #be123c;
 }
 
-.admin-pill.invited,
 .admin-pill.pending,
 .admin-pill.indexing,
 .admin-pill.draft {

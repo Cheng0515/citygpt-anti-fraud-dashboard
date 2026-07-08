@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import App from './App'
@@ -17,19 +16,19 @@ describe('CityGPT admin demo', () => {
     expect(screen.queryByRole('button', { name: '回到任務排程' })).not.toBeInTheDocument()
   })
 
-  it('shows the five required backend areas in the sidebar', () => {
+  it('shows the four required backend areas in the sidebar', () => {
     render(<App />)
 
     expect(screen.getByRole('navigation', { name: '管理後臺導覽' })).toBeInTheDocument()
     for (const label of [
       '使用者與權限',
-      '知識代理人管理',
       '稽核日誌',
       '使用統計',
       '回饋管理',
     ]) {
       expect(screen.getByRole('button', { name: new RegExp(label) })).toBeInTheDocument()
     }
+    expect(screen.queryByRole('button', { name: /知識代理人管理/ })).not.toBeInTheDocument()
   })
 
   it('shows role dropdowns directly in user row actions', () => {
@@ -43,18 +42,13 @@ describe('CityGPT admin demo', () => {
     expect(screen.queryByText('管理知識代理人')).not.toBeInTheDocument()
   })
 
-  it('lets RD demo the knowledge-agent creation flow', async () => {
-    const user = userEvent.setup()
+  it('shows feedback rating as a 1 to 10 score', () => {
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /知識代理人管理/ }))
-    await user.type(
-      screen.getByPlaceholderText('輸入代理人名稱，例如：採購規範助手'),
-      '採購規範助手',
-    )
-    await user.click(screen.getByRole('button', { name: '新增代理人' }))
+    fireEvent.click(screen.getByRole('button', { name: /回饋管理/ }))
 
-    expect(screen.getAllByText('採購規範助手').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByLabelText('System Prompt')).toBeInTheDocument()
+    expect(screen.getByText('平均評分')).toBeInTheDocument()
+    expect(screen.getByText(/評分 3\/10/)).toBeInTheDocument()
+    expect(screen.getByLabelText('回饋評分')).toBeInTheDocument()
   })
 })

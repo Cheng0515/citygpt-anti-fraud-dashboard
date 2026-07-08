@@ -22,7 +22,7 @@ import {
   UserCog,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   adminUsers,
@@ -53,11 +53,6 @@ const pageMeta: Record<
     description: '管理帳號、管理者權限與停用風險',
     icon: <UserCog size={18} />,
   },
-  knowledge: {
-    label: '知識代理人管理',
-    description: '管理 Prompt、代理人服務與可使用對象',
-    icon: <BookOpen size={18} />,
-  },
   audit: {
     label: '稽核日誌',
     description: '追蹤誰在何時做了什麼',
@@ -86,12 +81,12 @@ const permissionLabels: Record<Permission, string> = {
   'audit.view': '查看稽核日誌',
   'stats.view': '查看使用統計',
   'feedback.manage': '處理回饋',
+  'system.audit': '系統安全判斷',
 }
 
 const userStatusLabels: Record<AdminUser['status'], string> = {
   active: '啟用中',
   suspended: '已停用',
-  invited: '已邀請',
 }
 
 const indexStatusLabels: Record<KnowledgeDocument['indexStatus'], string> = {
@@ -299,27 +294,20 @@ function UsersPage({
   setNotice: (message: string) => void
 }) {
   const [query, setQuery] = useState('')
-  const [unit, setUnit] = useState('all')
   const [status, setStatus] = useState<'all' | AdminUser['status']>('all')
   const [suspendTarget, setSuspendTarget] = useState<AdminUser | null>(null)
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState({
     name: '',
     email: '',
-    department: '民政處',
     role: 'user' as AdminRole,
   })
   const canManage = can(role, 'users.manage')
 
-  const departments = useMemo(
-    () => ['all', ...Array.from(new Set(users.map((user) => user.department)))],
-    [users],
-  )
   const visible = users.filter((user) => {
-    const text = `${user.name} ${user.email} ${user.department}`.toLowerCase()
+    const text = `${user.name} ${user.email}`.toLowerCase()
     return (
       text.includes(query.toLowerCase()) &&
-      (unit === 'all' || user.department === unit) &&
       (status === 'all' || user.status === status)
     )
   })
@@ -330,15 +318,14 @@ function UsersPage({
       id: `user-${Date.now()}`,
       name: draft.name,
       email: draft.email,
-      department: draft.department,
       role: draft.role,
-      status: 'invited',
+      status: 'active',
       lastLogin: null,
     }
     setUsers((current) => [next, ...current])
     setAdding(false)
-    setDraft({ name: '', email: '', department: '民政處', role: 'user' })
-    setNotice(`已建立 ${next.name}，並寄出邀請。`)
+    setDraft({ name: '', email: '', role: 'user' })
+    setNotice(`已建立 ${next.name}。`)
   }
 
   const updateRole = (target: AdminUser, nextRole: AdminRole) => {
@@ -388,18 +375,8 @@ function UsersPage({
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="搜尋姓名、Email 或處室"
+                placeholder="搜尋姓名或 Email"
               />
-            </label>
-            <label>
-              處室
-              <select value={unit} onChange={(event) => setUnit(event.target.value)}>
-                {departments.map((item) => (
-                  <option key={item} value={item}>
-                    {item === 'all' ? '全部處室' : item}
-                  </option>
-                ))}
-              </select>
             </label>
             <label>
               狀態
@@ -411,7 +388,6 @@ function UsersPage({
               >
                 <option value="all">全部狀態</option>
                 <option value="active">啟用中</option>
-                <option value="invited">已邀請</option>
                 <option value="suspended">已停用</option>
               </select>
             </label>
@@ -478,13 +454,6 @@ function UsersPage({
               />
             </label>
             <label>
-              處室
-              <input
-                value={draft.department}
-                onChange={(event) => setDraft({ ...draft, department: event.target.value })}
-              />
-            </label>
-            <label>
               權限類型
               <select
                 value={draft.role}
@@ -507,7 +476,7 @@ function UsersPage({
                 取消
               </button>
               <button type="button" className="admin-primary" onClick={submitUser}>
-                建立並邀請
+                建立使用者
               </button>
             </div>
           </div>
@@ -1144,7 +1113,13 @@ function StatsPage({ stats }: { stats: UsageStats[] }) {
       id: 'satisfactionRate',
       label: '正向回饋率',
       value: `${Math.round(current.kpis.satisfactionRate * 100)}%`,
-      definition: '正向回饋除以正負回饋總數。',
+      definition: '1-10 分回饋中，7 分以上或正向回饋占全部回饋的比例。',
+    },
+    {
+      id: 'negativeFeedback',
+      label: '負向回饋',
+      value: current.negativeFeedback.count.toLocaleString(),
+      definition: '使用者給 1-6 分或選擇負向回饋的次數。',
     },
     {
       id: 'averageResponseMs',
@@ -1205,23 +1180,18 @@ function StatsPage({ stats }: { stats: UsageStats[] }) {
             ))}
           </section>
           <section>
-            <h3>處室使用排行</h3>
-            {current.departmentRanking.map((item) => (
-              <div key={item.department} className="progress-row">
-                <span>{item.department}</span>
-                <progress max={current.departmentRanking[0].queries} value={item.queries} />
-                <strong>{item.activeUsers} 人</strong>
-              </div>
-            ))}
-          </section>
-          <section>
-            <h3>未回答與錯誤</h3>
-            <p className="large-number">{Math.round(current.unansweredRate * 1000) / 10}%</p>
-            {current.errorSummaries.map((error) => (
-              <div key={error.code} className="error-row">
-                <strong>{error.code}</strong>
-                <span>{error.description}</span>
-                <em>{error.count}</em>
+            <h3>負向回饋與未解決</h3>
+            <p className="large-number">{Math.round(current.negativeFeedback.rate * 100)}%</p>
+            <div className="error-row">
+              <strong>未解決</strong>
+              <span>負向回饋尚未完成處理</span>
+              <em>{current.negativeFeedback.unresolved.toLocaleString()}</em>
+            </div>
+            {current.negativeFeedback.commonReasons.map((reason) => (
+              <div key={reason.reason} className="error-row">
+                <strong>{reason.reason}</strong>
+                <span>{reason.description}</span>
+                <em>{reason.count}</em>
               </div>
             ))}
           </section>
@@ -1252,9 +1222,10 @@ function FeedbackPage({
     selected?.status ?? 'pending',
   )
   const [note, setNote] = useState(selected?.note ?? '')
-  const positiveRate = Math.round(
-    (items.filter((item) => item.sentiment === 'positive').length / items.length) * 100,
-  )
+  const [rating, setRating] = useState<FeedbackItem['rating']>(selected?.rating ?? 5)
+  const averageRating = Math.round(
+    (items.reduce((sum, item) => sum + item.rating, 0) / items.length) * 10,
+  ) / 10
   const visible = items.filter(
     (item) =>
       (sentiment === 'all' || item.sentiment === sentiment) &&
@@ -1266,6 +1237,7 @@ function FeedbackPage({
     setTag('')
     setNextStatus(selected?.status ?? 'pending')
     setNote(selected?.note ?? '')
+    setRating(selected?.rating ?? 5)
   }, [selected])
 
   const save = () => {
@@ -1276,6 +1248,8 @@ function FeedbackPage({
     }
     const next: FeedbackItem = {
       ...selected,
+      rating,
+      sentiment: rating >= 7 ? 'positive' : 'negative',
       assignee: assignee || null,
       status: nextStatus,
       note,
@@ -1295,8 +1269,8 @@ function FeedbackPage({
           subtitle="把正負回饋轉成可追蹤的知識庫改善任務。"
           action={
             <div className="mini-kpi">
-              <span>正向回饋率</span>
-              <strong>{positiveRate}%</strong>
+              <span>平均評分</span>
+              <strong>{averageRating}/10</strong>
             </div>
           }
         >
@@ -1333,7 +1307,7 @@ function FeedbackPage({
                 </span>
                 <strong>{item.question}</strong>
                 <small>
-                  {item.knowledgeBase} · {feedbackStatusLabels[item.status]}
+                  評分 {item.rating}/10 · {item.knowledgeBase} · {feedbackStatusLabels[item.status]}
                 </small>
               </button>
             ))}
@@ -1356,6 +1330,22 @@ function FeedbackPage({
                 </span>
               ))}
             </div>
+            <label>
+              回饋評分
+              <select
+                value={rating}
+                disabled={!canManage}
+                onChange={(event) =>
+                  setRating(Number(event.target.value) as FeedbackItem['rating'])
+                }
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
+                  <option key={score} value={score}>
+                    {score} 分
+                  </option>
+                ))}
+              </select>
+            </label>
             <label>
               負責小組
               <select
@@ -1509,14 +1499,6 @@ export default function AdminApp({ onExit }: { onExit?: () => void }) {
           {page === 'users' && (
             <UsersPage role={role} users={users} setUsers={setUsers} setNotice={setNotice} />
           )}
-          {page === 'knowledge' && (
-            <KnowledgeAgentsPage
-              role={role}
-              agents={agents}
-              setAgents={setAgents}
-              setNotice={setNotice}
-            />
-          )}
           {page === 'audit' && (
             <AuditPage events={auditEvents.map((event) => ({ ...event }))} setNotice={setNotice} />
           )}
@@ -1534,7 +1516,7 @@ export default function AdminApp({ onExit }: { onExit?: () => void }) {
           <Filter size={16} />
           這版 prototype 只模擬操作，不連真實 API；所有異動都留在瀏覽器本機狀態。
           <ClipboardList size={16} />
-          驗收重點：權限、知識代理人、稽核、KPI、回饋處理。
+          驗收重點：權限、稽核、KPI、回饋處理。
           <FileSearch size={16} />
           所有工程細節都收在後面，不出現在主要操作路徑。
         </footer>

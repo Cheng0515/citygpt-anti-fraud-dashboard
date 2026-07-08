@@ -27,7 +27,7 @@ describe('admin sample data', () => {
       expect.objectContaining({ name: '王小明', status: 'active' }),
     )
     expect(new Set(adminUsers.map((user) => user.status))).toEqual(
-      new Set(['active', 'suspended', 'invited']),
+      new Set(['active', 'suspended']),
     )
     expect(new Set(adminUsers.map((user) => user.role))).toEqual(
       new Set(['user', 'admin']),
@@ -60,20 +60,23 @@ describe('admin sample data', () => {
     const event = auditEvents.find((candidate) => candidate.id === 'audit-008')
     const before = event?.before
     const after = event?.after
-    const error = after?.error as Readonly<Record<string, unknown>> | undefined
 
     expect(event).toBeDefined()
     expect(Object.isFrozen(before)).toBe(true)
     expect(Object.isFrozen(after)).toBe(true)
-    expect(error).toEqual({ code: 'CONTENT_PARSE_ERROR', retryable: false })
-    expect(Object.isFrozen(error)).toBe(true)
+    expect(after).toEqual(
+      expect.objectContaining({
+        reason: '輸入疑似包含帳號密碼或 Token',
+        blocked: true,
+      }),
+    )
     expect(Object.isFrozen(event?.permissionDecision)).toBe(true)
 
-    const originalStatus = after?.indexStatus
+    const originalReason = after?.reason
     expect(() => {
-      ;(after as Record<string, unknown>).indexStatus = 'completed'
+      ;(after as Record<string, unknown>).reason = 'changed'
     }).toThrow(TypeError)
-    expect(after?.indexStatus).toBe(originalStatus)
+    expect(after?.reason).toBe(originalReason)
   })
 
   it('uses discriminated permission decisions with denial reasons', () => {
@@ -95,9 +98,10 @@ describe('admin sample data', () => {
       expect(stats.kpis.totalQueries).toBeGreaterThan(0)
       expect(stats.trends.length).toBeGreaterThan(0)
       expect(stats.popularKnowledgeBases.length).toBeGreaterThan(0)
-      expect(stats.departmentRanking.length).toBeGreaterThan(0)
-      expect(stats.unansweredRate).toBeGreaterThanOrEqual(0)
-      expect(stats.errorSummaries.length).toBeGreaterThan(0)
+      expect(stats.negativeFeedback.count).toBeGreaterThan(0)
+      expect(stats.negativeFeedback.unresolved).toBeGreaterThanOrEqual(0)
+      expect(stats.negativeFeedback.rate).toBeGreaterThanOrEqual(0)
+      expect(stats.negativeFeedback.commonReasons.length).toBeGreaterThan(0)
     }
   })
 
@@ -106,6 +110,7 @@ describe('admin sample data', () => {
     expect(feedbackItems).toContainEqual(
       expect.objectContaining({ sentiment: 'negative', status: 'pending' }),
     )
+    expect(feedbackItems.every((item) => item.rating >= 1 && item.rating <= 10)).toBe(true)
     expect(
       feedbackItems.every(
         (item) => item.context.traceId && item.citations.length > 0,

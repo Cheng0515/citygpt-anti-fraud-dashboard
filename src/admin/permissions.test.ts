@@ -9,6 +9,7 @@ const permissions: readonly Permission[] = [
   'audit.view',
   'stats.view',
   'feedback.manage',
+  'system.audit',
 ]
 
 const expectedPermissions: Readonly<
@@ -29,7 +30,6 @@ describe('admin permissions', () => {
   it('grants the single administrator role access to every admin page', () => {
     expect(allowedPages('admin')).toEqual([
       'users',
-      'knowledge',
       'audit',
       'stats',
       'feedback',
@@ -57,7 +57,6 @@ describe('admin permissions', () => {
     expect(allowedPages('user')).toEqual([])
     expect(allowedPages('admin')).toEqual([
       'users',
-      'knowledge',
       'audit',
       'stats',
       'feedback',
