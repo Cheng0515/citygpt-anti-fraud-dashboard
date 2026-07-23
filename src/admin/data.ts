@@ -177,6 +177,40 @@ export const knowledgeDocuments: readonly KnowledgeDocument[] = deepFreeze([
 
 export const auditEvents: readonly AuditEvent[] = deepFreeze([
   {
+    id: 'audit-010',
+    timestamp: '2026-07-07T10:42:18+08:00',
+    actor: '系統',
+    ip: '192.0.2.210',
+    module: '系統管理',
+    action: 'Token 用量異常',
+    result: 'failed',
+    resource: 'xiaoming.wang@citygpt.example',
+    traceId: 'trc-20260707-0010',
+    before: {
+      monthlyTokenUsage: 282400,
+      monthlyTokenThreshold: 300000,
+    },
+    after: {
+      monthlyTokenUsage: 382400,
+      monthlyTokenThreshold: 300000,
+      overThresholdTokens: 82400,
+      alertRule: '單一使用者本月 Token 用量超過一般同仁合理月用量',
+      normalUsageBaseline: {
+        shortQuestion: { tokens: 800, dailyLimit: 28 },
+        documentSummary: { tokens: 2200, dailyLimit: 10 },
+        longDocumentAnalysis: { tokens: 5000, dailyLimit: '4-5' },
+        recommendedDailyInteractions: '12-18',
+        estimatedMonthlyThreshold: 300000,
+      },
+      emailNotification: {
+        status: 'sent',
+        recipients: ['IT', 'admin'],
+        subject: 'CityGPT Token 用量異常通知',
+      },
+    },
+    permissionDecision: { decision: 'allowed', permission: 'system.audit' },
+  },
+  {
     id: 'audit-001',
     timestamp: '2026-07-06T09:08:12+08:00',
     actor: '黃品蓁',

@@ -91,6 +91,30 @@ describe('admin sample data', () => {
     expect(denied.every((decision) => decision.reason.length > 0)).toBe(true)
   })
 
+  it('includes token usage anomaly audit with IT and admin notification', () => {
+    const event = auditEvents.find((candidate) => candidate.action === 'Token 用量異常')
+    const after = event?.after
+    const notification = after?.emailNotification as
+      | Readonly<{ status: string; recipients: readonly string[]; subject: string }>
+      | undefined
+
+    expect(event).toEqual(
+      expect.objectContaining({
+        module: '系統管理',
+        result: 'failed',
+        resource: 'xiaoming.wang@citygpt.example',
+      }),
+    )
+    expect(after).toEqual(
+      expect.objectContaining({
+        monthlyTokenUsage: 382400,
+        monthlyTokenThreshold: 300000,
+      }),
+    )
+    expect(notification?.status).toBe('sent')
+    expect(notification?.recipients).toEqual(['IT', 'admin'])
+  })
+
   it('provides complete usage snapshots for every supported range', () => {
     expect(usageStats.map((stats) => stats.rangeDays)).toEqual([7, 30, 90])
 

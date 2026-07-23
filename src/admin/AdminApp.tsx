@@ -989,6 +989,7 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
       (result === 'all' || event.result === result) &&
       (module === 'all' || event.module === module),
   )
+  const tokenAlert = events.find((event) => event.action === 'Token 用量異常')
 
   return (
     <div className="admin-grid">
@@ -1087,6 +1088,34 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
             </div>
           </>
         )}
+        <section className="audit-rule-card">
+          <h3>Token 用量異常規則</h3>
+          <p>
+            以一般同仁「短問答 + 公文摘要」混用推估，合理月用量門檻暫定
+            <strong> 300,000 tokens / 月</strong>。
+          </p>
+          <div className="audit-rule-list">
+            <span>短問答 / 潤飾：約 800 tokens，約 28 次 / 天</span>
+            <span>公文 / 報告摘要：約 2,200 tokens，約 10 次 / 天</span>
+            <span>長文件 / 法規研析：約 5,000 tokens，約 4-5 次 / 天</span>
+          </div>
+          <p>
+            超過門檻時建立稽核事件，並自動發信通知 <strong>IT</strong> 與{' '}
+            <strong>admin</strong>。
+          </p>
+          {tokenAlert?.after && (
+            <div className="audit-alert-summary">
+              <span>本月用量</span>
+              <strong>
+                {Number(tokenAlert.after.monthlyTokenUsage).toLocaleString()} tokens
+              </strong>
+              <small>
+                已超過 {Number(tokenAlert.after.overThresholdTokens).toLocaleString()} tokens；
+                通知狀態：已寄送
+              </small>
+            </div>
+          )}
+        </section>
       </aside>
     </div>
   )

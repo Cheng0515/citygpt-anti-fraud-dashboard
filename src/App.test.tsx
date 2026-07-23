@@ -51,4 +51,16 @@ describe('CityGPT admin demo', () => {
     expect(screen.getByText(/評分 3\/10/)).toBeInTheDocument()
     expect(screen.getByLabelText('回饋評分')).toBeInTheDocument()
   })
+
+  it('shows token usage anomaly rules in audit logs', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /稽核日誌/ }))
+
+    expect(screen.getAllByText('Token 用量異常').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('Token 用量異常規則')).toBeInTheDocument()
+    expect(screen.getByText(/300,000 tokens \/ 月/)).toBeInTheDocument()
+    expect(screen.getAllByText(/IT/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/admin/).length).toBeGreaterThanOrEqual(1)
+  })
 })

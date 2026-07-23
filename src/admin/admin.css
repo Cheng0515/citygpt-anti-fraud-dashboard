@@ -564,6 +564,58 @@ textarea:disabled {
   color: #475569;
 }
 
+.audit-rule-card {
+  display: grid;
+  gap: 12px;
+  border-radius: 18px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 14px;
+  color: #7c2d12;
+}
+
+.audit-rule-card h3,
+.audit-rule-card p {
+  margin: 0;
+}
+
+.audit-rule-card h3 {
+  font-size: 16px;
+}
+
+.audit-rule-list {
+  display: grid;
+  gap: 7px;
+}
+
+.audit-rule-list span {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid #fed7aa;
+  padding: 9px 10px;
+  font-weight: 800;
+}
+
+.audit-alert-summary {
+  display: grid;
+  gap: 4px;
+  border-radius: 14px;
+  background: white;
+  border: 1px solid #fdba74;
+  padding: 12px;
+}
+
+.audit-alert-summary span,
+.audit-alert-summary small {
+  color: #9a3412;
+  font-weight: 800;
+}
+
+.audit-alert-summary strong {
+  color: #be123c;
+  font-size: 22px;
+}
+
 .range-switch {
   display: flex;
   gap: 7px;
