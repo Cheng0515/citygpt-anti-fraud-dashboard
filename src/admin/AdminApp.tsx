@@ -30,6 +30,7 @@ import {
   feedbackItems,
   knowledgeDocuments,
   usageStats,
+  userTrafficStats,
 } from './data'
 import { allowedPages, can } from './permissions'
 import type {
@@ -41,6 +42,7 @@ import type {
   KnowledgeDocument,
   Permission,
   UsageStats,
+  UserTrafficStats,
 } from './types'
 import './admin.css'
 
@@ -1121,10 +1123,21 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
   )
 }
 
-function StatsPage({ stats }: { stats: UsageStats[] }) {
+function StatsPage({
+  stats,
+  traffic,
+}: {
+  stats: UsageStats[]
+  traffic: UserTrafficStats[]
+}) {
   const [range, setRange] = useState<7 | 30 | 90>(30)
   const [selectedKpi, setSelectedKpi] = useState('totalQueries')
   const current = stats.find((item) => item.rangeDays === range) ?? stats[0]
+  const sortedTraffic = [...traffic].sort((a, b) => b.monthlyTokens - a.monthlyTokens)
+  const alertUsers = traffic.filter((item) => item.alertLevel === 'alert').length
+  const watchUsers = traffic.filter((item) => item.alertLevel === 'watch').length
+  const totalMonthlyTokens = traffic.reduce((sum, item) => sum + item.monthlyTokens, 0)
+  const tokenLimit = traffic[0]?.tokenLimit ?? 300000
   const kpis = [
     {
       id: 'totalQueries',
@@ -1149,6 +1162,18 @@ function StatsPage({ stats }: { stats: UsageStats[] }) {
       label: '負向回饋',
       value: current.negativeFeedback.count.toLocaleString(),
       definition: '使用者給 1-6 分或選擇負向回饋的次數。',
+    },
+    {
+      id: 'monthlyTokens',
+      label: '本月 Token',
+      value: totalMonthlyTokens.toLocaleString(),
+      definition: '每位使用者每次互動都累計 token，用於成本控管與異常偵測。',
+    },
+    {
+      id: 'trafficAlerts',
+      label: '用量觀察',
+      value: `${alertUsers + watchUsers} 人`,
+      definition: '超過 80% 門檻先列入觀察；超過 300,000 tokens 才建立稽核與通知。',
     },
     {
       id: 'averageResponseMs',
@@ -1197,6 +1222,66 @@ function StatsPage({ stats }: { stats: UsageStats[] }) {
             <h3>{selected.label}怎麼算？</h3>
             <p>{selected.definition}</p>
             <small>這裡刻意用白話解釋 KPI，避免管理者被迫理解資料欄位名稱。</small>
+          </section>
+          <section className="traffic-policy-card">
+            <h3>流量統計怎麼記？</h3>
+            <div className="traffic-policy-list">
+              <span>
+                <strong>每個人都記錄</strong>
+                月 token、提問次數、平均每日提問、最後使用時間。
+              </span>
+              <span>
+                <strong>不全部進稽核</strong>
+                一般使用只放統計，避免 1,000 人資料把稽核日誌洗版。
+              </span>
+              <span>
+                <strong>異常才發 alert</strong>
+                超過 {tokenLimit.toLocaleString()} tokens / 月，建立稽核事件並通知 IT / admin。
+              </span>
+            </div>
+          </section>
+          <section className="traffic-watch-card">
+            <h3>個人月用量監控</h3>
+            <p>
+              目前 {alertUsers} 人已異常、{watchUsers} 人接近門檻；稽核日誌只收已異常與管理操作。
+            </p>
+            <div className="traffic-table" role="table" aria-label="個人月流量統計">
+              <div className="traffic-row traffic-head" role="row">
+                <span>使用者</span>
+                <span>本月 token</span>
+                <span>狀態</span>
+                <span>處理方式</span>
+              </div>
+              {sortedTraffic.map((item) => {
+                const ratio = Math.round((item.monthlyTokens / item.tokenLimit) * 100)
+                const statusLabel =
+                  item.alertLevel === 'alert'
+                    ? '已 alert'
+                    : item.alertLevel === 'watch'
+                      ? '觀察'
+                      : '正常'
+
+                return (
+                  <div key={item.id} className="traffic-row" role="row">
+                    <span>
+                      <strong>{item.name}</strong>
+                      <small>{item.email}</small>
+                    </span>
+                    <span>
+                      <strong>{item.monthlyTokens.toLocaleString()}</strong>
+                      <small>
+                        {item.monthlyQueries} 次 / 日均 {item.dailyAverageQueries} 次
+                      </small>
+                    </span>
+                    <span>
+                      <em className={`traffic-status ${item.alertLevel}`}>{statusLabel}</em>
+                      <small>{ratio}%</small>
+                    </span>
+                    <span>{item.note}</span>
+                  </div>
+                )
+              })}
+            </div>
           </section>
           <section>
             <h3>熱門知識庫</h3>
@@ -1531,7 +1616,12 @@ export default function AdminApp({ onExit }: { onExit?: () => void }) {
           {page === 'audit' && (
             <AuditPage events={auditEvents.map((event) => ({ ...event }))} setNotice={setNotice} />
           )}
-          {page === 'stats' && <StatsPage stats={usageStats.map((item) => ({ ...item }))} />}
+          {page === 'stats' && (
+            <StatsPage
+              stats={usageStats.map((item) => ({ ...item }))}
+              traffic={userTrafficStats.map((item) => ({ ...item }))}
+            />
+          )}
           {page === 'feedback' && (
             <FeedbackPage
               role={role}

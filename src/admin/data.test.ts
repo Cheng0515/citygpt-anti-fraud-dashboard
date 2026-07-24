@@ -6,6 +6,7 @@ import {
   feedbackItems,
   knowledgeDocuments,
   usageStats,
+  userTrafficStats,
 } from './data'
 import type { AuditEvent, PermissionDecision } from './types'
 
@@ -16,6 +17,7 @@ describe('admin sample data', () => {
       ...knowledgeDocuments,
       ...auditEvents,
       ...feedbackItems,
+      ...userTrafficStats,
     ].map((item) => item.id)
 
     expect(new Set(ids).size).toBe(ids.length)
@@ -127,6 +129,28 @@ describe('admin sample data', () => {
       expect(stats.negativeFeedback.rate).toBeGreaterThanOrEqual(0)
       expect(stats.negativeFeedback.commonReasons.length).toBeGreaterThan(0)
     }
+  })
+
+  it('tracks per-user traffic while reserving audit logs for anomalies', () => {
+    expect(userTrafficStats.length).toBeGreaterThanOrEqual(4)
+    expect(Object.isFrozen(userTrafficStats)).toBe(true)
+    expect(userTrafficStats.every(Object.isFrozen)).toBe(true)
+
+    const alertUser = userTrafficStats.find((item) => item.alertLevel === 'alert')
+    const watchUser = userTrafficStats.find((item) => item.alertLevel === 'watch')
+
+    expect(alertUser).toEqual(
+      expect.objectContaining({
+        email: 'xiaoming.wang@citygpt.example',
+        monthlyTokens: 382400,
+        tokenLimit: 300000,
+      }),
+    )
+    expect(alertUser?.monthlyTokens).toBeGreaterThan(alertUser?.tokenLimit ?? 0)
+    expect(watchUser?.monthlyTokens).toBeGreaterThanOrEqual(
+      Math.round((watchUser?.tokenLimit ?? 0) * 0.8),
+    )
+    expect(watchUser?.monthlyTokens).toBeLessThan(watchUser?.tokenLimit ?? 0)
   })
 
   it('includes actionable feedback states and supporting context', () => {

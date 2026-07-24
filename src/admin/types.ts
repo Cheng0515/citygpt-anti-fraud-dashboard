@@ -76,6 +76,20 @@ export interface NegativeFeedbackSummary {
   readonly description: string
 }
 
+export interface UserTrafficStats {
+  readonly id: string
+  readonly name: string
+  readonly email: string
+  readonly role: AdminRole
+  readonly monthlyTokens: number
+  readonly monthlyQueries: number
+  readonly dailyAverageQueries: number
+  readonly tokenLimit: number
+  readonly alertLevel: 'normal' | 'watch' | 'alert'
+  readonly lastActivityAt: string
+  readonly note: string
+}
+
 export interface UsageStats {
   readonly rangeDays: 7 | 30 | 90
   readonly kpis: {

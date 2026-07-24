@@ -707,6 +707,111 @@ textarea:disabled {
   gap: 14px;
 }
 
+.traffic-policy-card {
+  background: #f8fbff;
+  border: 1px solid #e4ecf8;
+  border-radius: 18px;
+}
+
+.traffic-policy-list {
+  display: grid;
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.traffic-policy-list span {
+  display: grid;
+  gap: 3px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  background: white;
+  border: 1px solid #e4ecf8;
+  color: #5a6680;
+  line-height: 1.55;
+}
+
+.traffic-policy-list strong {
+  color: #17233c;
+}
+
+.traffic-watch-card {
+  grid-column: 1 / -1;
+  background: #f8fbff;
+  border: 1px solid #e4ecf8;
+  border-radius: 18px;
+}
+
+.traffic-watch-card p {
+  margin-top: 0;
+  color: #5a6680;
+}
+
+.traffic-table {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.traffic-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.1fr) minmax(150px, 0.8fr) minmax(96px, 0.45fr) 1.4fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 15px;
+  background: white;
+  border: 1px solid #e4ecf8;
+}
+
+.traffic-row span {
+  min-width: 0;
+}
+
+.traffic-row strong,
+.traffic-row small {
+  display: block;
+}
+
+.traffic-row small {
+  margin-top: 3px;
+  color: #68758d;
+  font-size: 12px;
+}
+
+.traffic-head {
+  background: #eef5ff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.traffic-status {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 68px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.traffic-status.normal {
+  background: #ecfdf5;
+  color: #087443;
+}
+
+.traffic-status.watch {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.traffic-status.alert {
+  background: #fff1f2;
+  color: #be123c;
+}
+
 .definition-card,
 .stats-layout section {
   padding: 16px;
@@ -912,6 +1017,7 @@ progress {
   }
 
   .agent-summary-grid,
+  .traffic-row,
   .progress-row,
   .error-row,
   .admin-detail-list div {

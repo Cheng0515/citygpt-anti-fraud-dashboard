@@ -63,4 +63,19 @@ describe('CityGPT admin demo', () => {
     expect(screen.getAllByText(/IT/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/admin/).length).toBeGreaterThanOrEqual(1)
   })
+
+  it('shows per-user traffic statistics without turning every usage into an audit log', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /使用統計/ }))
+
+    expect(screen.getByText('流量統計怎麼記？')).toBeInTheDocument()
+    expect(screen.getByText('個人月用量監控')).toBeInTheDocument()
+    expect(screen.getByText('每個人都記錄')).toBeInTheDocument()
+    expect(screen.getByText('不全部進稽核')).toBeInTheDocument()
+    expect(screen.getByText('異常才發 alert')).toBeInTheDocument()
+    expect(screen.getByText('382,400')).toBeInTheDocument()
+    expect(screen.getByText('已 alert')).toBeInTheDocument()
+    expect(screen.getByText('觀察')).toBeInTheDocument()
+  })
 })
