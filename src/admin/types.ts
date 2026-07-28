@@ -1,6 +1,6 @@
 export type AdminRole = 'user' | 'admin'
 
-export type AdminPage = 'users' | 'audit' | 'stats' | 'feedback'
+export type AdminPage = 'users' | 'stats' | 'audit' | 'feedback' | 'system'
 
 export type Permission =
   | 'users.manage'
@@ -34,14 +34,22 @@ export interface KnowledgeDocument {
   readonly id: string
   readonly name: string
   readonly knowledgeBase: string
+  readonly source: string
   readonly category: string
   readonly version: string
   readonly access: 'public' | 'department' | 'restricted'
   readonly published: boolean
   readonly indexStatus: 'pending' | 'indexing' | 'completed' | 'failed'
+  readonly syncStatus: 'completed' | 'failed' | 'waiting_retry' | 'processing'
+  readonly readStatus: 'completed' | 'failed' | 'waiting_retry' | 'processing'
+  readonly searchableStatus: 'completed' | 'failed' | 'waiting_retry' | 'processing'
+  readonly failureReason: string | null
+  readonly lastSyncedAt: string | null
   readonly updatedAt: string
   readonly updatedBy: string
 }
+
+export type AuditOperationType = 'login' | 'query' | 'download' | 'management' | 'system'
 
 export interface AuditEvent {
   readonly id: string
@@ -49,6 +57,7 @@ export interface AuditEvent {
   readonly actor: string
   readonly ip: string
   readonly module: string
+  readonly operationType: AuditOperationType
   readonly action: string
   readonly result: 'success' | 'failed'
   readonly resource: string
@@ -81,6 +90,7 @@ export interface UserTrafficStats {
   readonly name: string
   readonly email: string
   readonly role: AdminRole
+  readonly department: string
   readonly monthlyTokens: number
   readonly monthlyQueries: number
   readonly dailyAverageQueries: number
@@ -94,12 +104,36 @@ export interface UsageStats {
   readonly rangeDays: 7 | 30 | 90
   readonly kpis: {
     readonly totalQueries: number
+    readonly aiTokens: number
     readonly activeUsers: number
     readonly averageResponseMs: number
     readonly satisfactionRate: number
   }
   readonly trends: readonly UsageTrendPoint[]
   readonly popularKnowledgeBases: readonly KnowledgeBaseUsage[]
+  readonly featureUsage: readonly {
+    readonly name: string
+    readonly count: number
+  }[]
+  readonly departmentUsage: readonly {
+    readonly department: string
+    readonly queries: number
+    readonly tokens: number
+  }[]
+  readonly roleUsage: readonly {
+    readonly role: AdminRole
+    readonly queries: number
+    readonly tokens: number
+  }[]
+  readonly citedDocuments: readonly {
+    readonly name: string
+    readonly citations: number
+  }[]
+  readonly qualityIssues: readonly {
+    readonly type: '找不到答案' | '搜尋相關度偏低'
+    readonly question: string
+    readonly count: number
+  }[]
   readonly negativeFeedback: {
     readonly count: number
     readonly unresolved: number

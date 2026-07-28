@@ -30,9 +30,10 @@ describe('admin permissions', () => {
   it('grants the single administrator role access to every admin page', () => {
     expect(allowedPages('admin')).toEqual([
       'users',
-      'audit',
       'stats',
+      'audit',
       'feedback',
+      'system',
     ])
     for (const permission of permissions) {
       expect(can('admin', permission), permission).toBe(true)
@@ -57,9 +58,10 @@ describe('admin permissions', () => {
     expect(allowedPages('user')).toEqual([])
     expect(allowedPages('admin')).toEqual([
       'users',
-      'audit',
       'stats',
+      'audit',
       'feedback',
+      'system',
     ])
   })
 })

@@ -15,9 +15,10 @@ const ROLE_ACCESS: Readonly<Record<AdminRole, RoleAccess>> = Object.freeze({
   admin: Object.freeze({
     pages: freezeList<AdminPage>([
       'users',
-      'audit',
       'stats',
+      'audit',
       'feedback',
+      'system',
     ]),
     permissions: freezeList<Permission>([
       'users.manage',

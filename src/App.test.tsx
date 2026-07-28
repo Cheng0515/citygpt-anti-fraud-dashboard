@@ -16,7 +16,7 @@ describe('CityGPT admin demo', () => {
     expect(screen.queryByRole('button', { name: '回到任務排程' })).not.toBeInTheDocument()
   })
 
-  it('shows the four required backend areas in the sidebar', () => {
+  it('shows the PRD-aligned backend areas in the sidebar', () => {
     render(<App />)
 
     expect(screen.getByRole('navigation', { name: '管理後臺導覽' })).toBeInTheDocument()
@@ -25,6 +25,7 @@ describe('CityGPT admin demo', () => {
       '稽核日誌',
       '使用統計',
       '回饋管理',
+      '系統狀態',
     ]) {
       expect(screen.getByRole('button', { name: new RegExp(label) })).toBeInTheDocument()
     }
@@ -61,8 +62,10 @@ describe('CityGPT admin demo', () => {
     fireEvent.click(screen.getByRole('button', { name: /回饋管理/ }))
 
     expect(screen.getByText('平均評分')).toBeInTheDocument()
+    expect(screen.getByText('正向回饋率目標 70%')).toBeInTheDocument()
     expect(screen.getByText(/評分 3\/10/)).toBeInTheDocument()
     expect(screen.getByLabelText('回饋評分')).toBeInTheDocument()
+    expect(screen.getByText(/文字意見上限 200 字/)).toBeInTheDocument()
   })
 
   it('shows token usage anomaly rules in audit logs', () => {
@@ -70,6 +73,9 @@ describe('CityGPT admin demo', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /稽核日誌/ }))
 
+    expect(screen.getByText('保存期限')).toBeInTheDocument()
+    expect(screen.getAllByText(/180 天/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByLabelText(/操作類型/)).toBeInTheDocument()
     expect(screen.getAllByText('Token 用量異常').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Token 用量異常規則')).toBeInTheDocument()
     expect(screen.getByText(/300,000 tokens \/ 月/)).toBeInTheDocument()
@@ -82,6 +88,14 @@ describe('CityGPT admin demo', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /使用統計/ }))
 
+    expect(screen.getByRole('button', { name: '日' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '週' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '月' })).toBeInTheDocument()
+    expect(screen.getByText('AI 使用量')).toBeInTheDocument()
+    expect(screen.getByText('各功能使用頻率')).toBeInTheDocument()
+    expect(screen.getByText('部門與角色用量')).toBeInTheDocument()
+    expect(screen.getByText('常被引用文件')).toBeInTheDocument()
+    expect(screen.getByText('找不到答案 / 低相關度')).toBeInTheDocument()
     expect(screen.getByText('流量統計怎麼記？')).toBeInTheDocument()
     expect(screen.getByText('個人月用量監控')).toBeInTheDocument()
     expect(screen.getByText('每個人都記錄')).toBeInTheDocument()
@@ -90,5 +104,20 @@ describe('CityGPT admin demo', () => {
     expect(screen.getByText('382,400')).toBeInTheDocument()
     expect(screen.getByText('已 alert')).toBeInTheDocument()
     expect(screen.getByText('觀察')).toBeInTheDocument()
+  })
+
+  it('shows a lightweight system status page instead of a heavy RAG management page', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /系統狀態/ }))
+
+    expect(screen.getAllByRole('heading', { name: '系統狀態' }).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('PRD 對齊方式')).toBeInTheDocument()
+    expect(screen.getByText('文件處理狀態')).toBeInTheDocument()
+    expect(screen.getByText('同步文件')).toBeInTheDocument()
+    expect(screen.getByText('讀取內容')).toBeInTheDocument()
+    expect(screen.getByText('建立 AI 可搜尋資料')).toBeInTheDocument()
+    expect(screen.getByText('重新執行')).toBeInTheDocument()
+    expect(screen.queryByText('知識代理人管理')).not.toBeInTheDocument()
   })
 })

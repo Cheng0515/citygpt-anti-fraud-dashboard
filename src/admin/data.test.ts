@@ -42,6 +42,16 @@ describe('admin sample data', () => {
     expect(knowledgeDocuments).toContainEqual(
       expect.objectContaining({ name: '1999 服務 FAQ', indexStatus: 'failed' }),
     )
+    expect(
+      knowledgeDocuments.every(
+        (document) =>
+          document.source &&
+          document.syncStatus &&
+          document.readStatus &&
+          document.searchableStatus,
+      ),
+    ).toBe(true)
+    expect(knowledgeDocuments.some((document) => document.failureReason)).toBe(true)
   })
 
   it('keeps a detailed, immutable audit trail with both outcomes', () => {
@@ -53,6 +63,9 @@ describe('admin sample data', () => {
     ).toBe(true)
     expect(new Set(auditEvents.map((event) => event.result))).toEqual(
       new Set(['success', 'failed']),
+    )
+    expect(new Set(auditEvents.map((event) => event.operationType))).toEqual(
+      new Set(['login', 'query', 'download', 'management', 'system']),
     )
     expect(Object.isFrozen(auditEvents)).toBe(true)
     expect(auditEvents.every(Object.isFrozen)).toBe(true)
@@ -122,7 +135,13 @@ describe('admin sample data', () => {
 
     for (const stats of usageStats) {
       expect(stats.kpis.totalQueries).toBeGreaterThan(0)
+      expect(stats.kpis.aiTokens).toBeGreaterThan(0)
       expect(stats.trends.length).toBeGreaterThan(0)
+      expect(stats.featureUsage.length).toBeGreaterThan(0)
+      expect(stats.departmentUsage.length).toBeGreaterThan(0)
+      expect(stats.roleUsage.length).toBeGreaterThan(0)
+      expect(stats.citedDocuments.length).toBeGreaterThan(0)
+      expect(stats.qualityIssues.length).toBeGreaterThan(0)
       expect(stats.popularKnowledgeBases.length).toBeGreaterThan(0)
       expect(stats.negativeFeedback.count).toBeGreaterThan(0)
       expect(stats.negativeFeedback.unresolved).toBeGreaterThanOrEqual(0)
@@ -142,6 +161,7 @@ describe('admin sample data', () => {
     expect(alertUser).toEqual(
       expect.objectContaining({
         email: 'xiaoming.wang@citygpt.example',
+        department: '民政處',
         monthlyTokens: 382400,
         tokenLimit: 300000,
       }),

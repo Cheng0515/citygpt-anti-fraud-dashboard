@@ -403,7 +403,7 @@ textarea:disabled {
 
 .audit-table .admin-table-head,
 .audit-table .admin-row {
-  grid-template-columns: 1.1fr 1fr 1fr 1.3fr 1.2fr;
+  grid-template-columns: 1.1fr 0.9fr 0.8fr 1fr 1.25fr 1.1fr;
 }
 
 .admin-table-head {
@@ -480,6 +480,8 @@ textarea:disabled {
 .admin-pill.pending,
 .admin-pill.indexing,
 .admin-pill.sync_error,
+.admin-pill.waiting_retry,
+.admin-pill.processing,
 .admin-pill.draft {
   background: #fff7ed;
   color: #c2410c;
@@ -528,6 +530,110 @@ textarea:disabled {
   margin-top: 4px;
   color: #5a6680;
   line-height: 1.55;
+}
+
+.system-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.system-summary-grid article,
+.prd-note-card,
+.retention-card,
+.failure-reason-card {
+  border: 1px solid #e4ecf8;
+  border-radius: 18px;
+  background: #f8fbff;
+  padding: 14px;
+}
+
+.system-summary-grid span,
+.system-summary-grid strong,
+.prd-note-card strong,
+.prd-note-card span,
+.retention-card strong,
+.retention-card span,
+.failure-reason-card strong,
+.failure-reason-card span {
+  display: block;
+}
+
+.system-summary-grid span,
+.prd-note-card span,
+.retention-card span,
+.failure-reason-card span {
+  color: #5a6680;
+  line-height: 1.55;
+}
+
+.system-summary-grid strong {
+  margin-top: 5px;
+  font-size: 28px;
+}
+
+.prd-note-card,
+.retention-card {
+  margin-bottom: 14px;
+}
+
+.system-doc-list {
+  display: grid;
+  gap: 10px;
+}
+
+.system-doc-card {
+  display: grid;
+  gap: 7px;
+  text-align: left;
+  color: #17233c;
+  background: #f8fbff;
+  border-color: #e4ecf8;
+  padding: 14px;
+}
+
+.system-doc-card.active {
+  background: #eaf2ff;
+  border-color: rgba(23, 105, 255, 0.45);
+}
+
+.pipeline-list {
+  display: grid;
+  gap: 10px;
+}
+
+.pipeline-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f8fbff;
+  border: 1px solid #e4ecf8;
+}
+
+.pipeline-status {
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.pipeline-status.completed {
+  background: #ecfdf5;
+  color: #087443;
+}
+
+.pipeline-status.failed {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.pipeline-status.waiting_retry,
+.pipeline-status.processing {
+  background: #fff7ed;
+  color: #c2410c;
 }
 
 .citation-list span,
@@ -857,6 +963,26 @@ textarea:disabled {
   margin-top: 8px;
 }
 
+.quality-issue-row {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.35fr) 1fr auto;
+  gap: 10px;
+  align-items: start;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #fff7ed;
+  color: #7c2d12;
+}
+
+.quality-issue-row strong {
+  color: #c2410c;
+}
+
+.quality-issue-row span {
+  line-height: 1.45;
+}
+
 progress {
   width: 100%;
   accent-color: #1769ff;
@@ -894,6 +1020,18 @@ progress {
   background: #ecfdf5;
   color: #087443;
   border-radius: 16px;
+}
+
+.feedback-kpi-stack {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mini-kpi.warning {
+  background: #fff7ed;
+  color: #c2410c;
 }
 
 .mini-kpi strong {
@@ -1006,6 +1144,7 @@ progress {
   }
 
   .kpi-grid,
+  .system-summary-grid,
   .stats-layout {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1027,6 +1166,7 @@ progress {
 
   .admin-sidebar nav,
   .kpi-grid,
+  .system-summary-grid,
   .stats-layout {
     grid-template-columns: 1fr;
   }
@@ -1049,6 +1189,7 @@ progress {
 
   .agent-summary-grid,
   .traffic-row,
+  .quality-issue-row,
   .progress-row,
   .error-row,
   .admin-detail-list div {
