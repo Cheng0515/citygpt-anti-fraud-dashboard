@@ -42,6 +42,19 @@ describe('CityGPT admin demo', () => {
     expect(screen.queryByText('管理知識代理人')).not.toBeInTheDocument()
   })
 
+  it('shows SSO account status as read-only and removes local disable controls', () => {
+    render(<App />)
+
+    expect(screen.getByText('SSO 使用者清單')).toBeInTheDocument()
+    expect(screen.getByText('帳號生命週期以 SSO 為準')).toBeInTheDocument()
+    expect(screen.getAllByText('SSO 有效').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('SSO 停用').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('同步異常').length).toBeGreaterThanOrEqual(1)
+    expect(screen.queryByRole('button', { name: '新增使用者' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '停用' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: '確認停用使用者' })).not.toBeInTheDocument()
+  })
+
   it('shows feedback rating as a 1 to 10 score', () => {
     render(<App />)
 

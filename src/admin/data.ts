@@ -24,7 +24,7 @@ export const adminUsers: readonly AdminUser[] = deepFreeze([
     name: '王小明',
     email: 'xiaoming.wang@citygpt.example',
     role: 'user',
-    status: 'active',
+    status: 'sso_active',
     lastLogin: '2026-07-06T08:42:00+08:00',
   },
   {
@@ -32,7 +32,7 @@ export const adminUsers: readonly AdminUser[] = deepFreeze([
     name: '林怡君',
     email: 'yijun.lin@citygpt.example',
     role: 'user',
-    status: 'active',
+    status: 'sso_active',
     lastLogin: '2026-07-06T09:05:00+08:00',
   },
   {
@@ -40,7 +40,7 @@ export const adminUsers: readonly AdminUser[] = deepFreeze([
     name: '陳志豪',
     email: 'zhihao.chen@citygpt.example',
     role: 'user',
-    status: 'active',
+    status: 'sso_active',
     lastLogin: '2026-07-05T16:18:00+08:00',
   },
   {
@@ -48,7 +48,7 @@ export const adminUsers: readonly AdminUser[] = deepFreeze([
     name: '張雅雯',
     email: 'yawen.zhang@citygpt.example',
     role: 'user',
-    status: 'active',
+    status: 'sync_error',
     lastLogin: null,
   },
   {
@@ -56,7 +56,7 @@ export const adminUsers: readonly AdminUser[] = deepFreeze([
     name: '李承翰',
     email: 'chenghan.li@citygpt.example',
     role: 'admin',
-    status: 'suspended',
+    status: 'sso_disabled',
     lastLogin: '2026-06-19T11:27:00+08:00',
   },
   {
@@ -64,7 +64,7 @@ export const adminUsers: readonly AdminUser[] = deepFreeze([
     name: '黃品蓁',
     email: 'pinzhen.huang@citygpt.example',
     role: 'admin',
-    status: 'active',
+    status: 'sso_active',
     lastLogin: '2026-07-04T14:03:00+08:00',
   },
   {
@@ -72,7 +72,7 @@ export const adminUsers: readonly AdminUser[] = deepFreeze([
     name: '許家維',
     email: 'jiawei.xu@citygpt.example',
     role: 'admin',
-    status: 'active',
+    status: 'sso_active',
     lastLogin: null,
   },
 ])
@@ -217,12 +217,12 @@ export const auditEvents: readonly AuditEvent[] = deepFreeze([
     actor: '黃品蓁',
     ip: '192.0.2.10',
     module: '使用者與權限',
-    action: '新增使用者',
+    action: 'SSO 同步新增使用者',
     result: 'success',
     resource: 'user-008',
     traceId: 'trc-20260706-0001',
     before: null,
-    after: { role: 'user', status: 'active' },
+    after: { role: 'user', status: 'sso_active', source: 'SSO' },
     permissionDecision: { decision: 'allowed', permission: 'users.manage' },
   },
   {
@@ -305,16 +305,16 @@ export const auditEvents: readonly AuditEvent[] = deepFreeze([
     actor: '李承翰',
     ip: '192.0.2.45',
     module: '使用者與權限',
-    action: '已停用帳號嘗試登入',
+    action: 'SSO 停用帳號嘗試登入',
     result: 'failed',
     resource: 'user-005',
     traceId: 'trc-20260704-0007',
-    before: { status: 'suspended' },
-    after: { status: 'suspended' },
+    before: { status: 'sso_disabled', source: 'SSO' },
+    after: { status: 'sso_disabled', blockedBy: 'SSO' },
     permissionDecision: {
       decision: 'denied',
       permission: 'system.audit',
-      reason: '帳號已停用',
+      reason: 'SSO 回傳帳號已停用',
     },
   },
   {

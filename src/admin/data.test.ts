@@ -26,10 +26,10 @@ describe('admin sample data', () => {
   it('covers realistic user and knowledge-document states', () => {
     expect(adminUsers.length).toBeGreaterThanOrEqual(6)
     expect(adminUsers).toContainEqual(
-      expect.objectContaining({ name: '王小明', status: 'active' }),
+      expect.objectContaining({ name: '王小明', status: 'sso_active' }),
     )
     expect(new Set(adminUsers.map((user) => user.status))).toEqual(
-      new Set(['active', 'suspended']),
+      new Set(['sso_active', 'sso_disabled', 'sync_error']),
     )
     expect(new Set(adminUsers.map((user) => user.role))).toEqual(
       new Set(['user', 'admin']),

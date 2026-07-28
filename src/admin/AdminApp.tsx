@@ -52,7 +52,7 @@ const pageMeta: Record<
 > = {
   users: {
     label: '使用者與權限',
-    description: '管理帳號、管理者權限與停用風險',
+    description: '查看 SSO 狀態與管理者角色',
     icon: <UserCog size={18} />,
   },
   audit: {
@@ -87,8 +87,9 @@ const permissionLabels: Record<Permission, string> = {
 }
 
 const userStatusLabels: Record<AdminUser['status'], string> = {
-  active: '啟用中',
-  suspended: '已停用',
+  sso_active: 'SSO 有效',
+  sso_disabled: 'SSO 停用',
+  sync_error: '同步異常',
 }
 
 const indexStatusLabels: Record<KnowledgeDocument['indexStatus'], string> = {
@@ -297,13 +298,6 @@ function UsersPage({
 }) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<'all' | AdminUser['status']>('all')
-  const [suspendTarget, setSuspendTarget] = useState<AdminUser | null>(null)
-  const [adding, setAdding] = useState(false)
-  const [draft, setDraft] = useState({
-    name: '',
-    email: '',
-    role: 'user' as AdminRole,
-  })
   const canManage = can(role, 'users.manage')
 
   const visible = users.filter((user) => {
@@ -313,22 +307,6 @@ function UsersPage({
       (status === 'all' || user.status === status)
     )
   })
-
-  const submitUser = () => {
-    if (!draft.name || !draft.email) return
-    const next: AdminUser = {
-      id: `user-${Date.now()}`,
-      name: draft.name,
-      email: draft.email,
-      role: draft.role,
-      status: 'active',
-      lastLogin: null,
-    }
-    setUsers((current) => [next, ...current])
-    setAdding(false)
-    setDraft({ name: '', email: '', role: 'user' })
-    setNotice(`已建立 ${next.name}。`)
-  }
 
   const updateRole = (target: AdminUser, nextRole: AdminRole) => {
     setUsers((current) =>
@@ -341,36 +319,24 @@ function UsersPage({
     )
   }
 
-  const suspend = () => {
-    if (!suspendTarget) return
-    setUsers((current) =>
-      current.map((user) =>
-        user.id === suspendTarget.id ? { ...user, status: 'suspended' } : user,
-      ),
-    )
-    setNotice(`${suspendTarget.name} 已停用，將不可登入 CityGPT 後臺。`)
-    setSuspendTarget(null)
-  }
-
   return (
     <div className="admin-grid">
       <div className="admin-main-column full-width">
         {!canManage && <EmptyPermission label="管理使用者" />}
         <Panel
-          title="使用者清單"
-          subtitle="角色只分成一般USER與管理者；只有管理者能進入後臺。"
-          action={
-            <button
-              type="button"
-              className="admin-primary"
-              disabled={!canManage}
-              onClick={() => setAdding(true)}
-            >
-              <Plus size={16} />
-              新增使用者
-            </button>
-          }
+          title="SSO 使用者清單"
+          subtitle="帳號是否有效由 SSO / AD 控制；CityGPT 後臺只管理一般USER與管理者角色。"
         >
+          <section className="sso-policy-card">
+            <ShieldCheck size={18} />
+            <div>
+              <strong>帳號生命週期以 SSO 為準</strong>
+              <span>
+                停用、離職與全縣帳號有效性不在 CityGPT 後臺操作；這裡只顯示 SSO
+                同步狀態，並設定誰是管理者。
+              </span>
+            </div>
+          </section>
           <div className="admin-filters" aria-label="使用者篩選">
             <label className="admin-search">
               <Search size={16} />
@@ -381,7 +347,7 @@ function UsersPage({
               />
             </label>
             <label>
-              狀態
+              SSO 狀態
               <select
                 value={status}
                 onChange={(event) =>
@@ -389,17 +355,18 @@ function UsersPage({
                 }
               >
                 <option value="all">全部狀態</option>
-                <option value="active">啟用中</option>
-                <option value="suspended">已停用</option>
+                <option value="sso_active">SSO 有效</option>
+                <option value="sso_disabled">SSO 停用</option>
+                <option value="sync_error">同步異常</option>
               </select>
             </label>
           </div>
           <div className="admin-table user-table">
             <div className="admin-table-head">
               <span>使用者</span>
-              <span>狀態</span>
+              <span>SSO 狀態</span>
               <span>最後登入</span>
-              <span>操作</span>
+              <span>CityGPT 角色</span>
             </div>
             {visible.map((user) => (
               <article key={user.id} className="admin-row">
@@ -412,7 +379,7 @@ function UsersPage({
                 <div className="admin-row-actions">
                   <select
                     value={user.role}
-                    disabled={!canManage || user.status === 'suspended'}
+                    disabled={!canManage || user.status !== 'sso_active'}
                     aria-label={`${user.name} 權限類型`}
                     onChange={(event) => updateRole(user, event.target.value as AdminRole)}
                   >
@@ -422,84 +389,12 @@ function UsersPage({
                       </option>
                     ))}
                   </select>
-                  <button
-                    type="button"
-                    disabled={!canManage || user.status === 'suspended'}
-                    onClick={() => setSuspendTarget(user)}
-                  >
-                    停用
-                  </button>
                 </div>
               </article>
             ))}
           </div>
         </Panel>
       </div>
-
-      {adding && (
-        <Modal title="新增使用者" onClose={() => setAdding(false)}>
-          <div className="admin-form">
-            <label>
-              姓名
-              <input
-                value={draft.name}
-                onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-                placeholder="例如：吳佳玲"
-              />
-            </label>
-            <label>
-              Email
-              <input
-                value={draft.email}
-                onChange={(event) => setDraft({ ...draft, email: event.target.value })}
-                placeholder="name@foxconn.com"
-              />
-            </label>
-            <label>
-              權限類型
-              <select
-                value={draft.role}
-                disabled={!canManage}
-                aria-describedby="admin-only-create-note"
-                onChange={(event) => setDraft({ ...draft, role: event.target.value as AdminRole })}
-              >
-                {Object.entries(roleLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <small id="admin-only-create-note">
-                預設建立一般USER；需要管理後臺時再改成管理者。
-              </small>
-            </label>
-            <div className="admin-modal-actions">
-              <button type="button" onClick={() => setAdding(false)}>
-                取消
-              </button>
-              <button type="button" className="admin-primary" onClick={submitUser}>
-                建立使用者
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {suspendTarget && (
-        <Modal title="確認停用使用者" onClose={() => setSuspendTarget(null)}>
-          <p className="admin-danger-copy">
-            停用後，{suspendTarget.name} 將無法登入後臺；既有稽核紀錄會保留。
-          </p>
-          <div className="admin-modal-actions">
-            <button type="button" onClick={() => setSuspendTarget(null)}>
-              取消
-            </button>
-            <button type="button" className="admin-danger" onClick={suspend}>
-              確認停用
-            </button>
-          </div>
-        </Modal>
-      )}
     </div>
   )
 }

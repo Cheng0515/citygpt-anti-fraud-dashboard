@@ -7,7 +7,7 @@
 ## 本版包含頁面
 
 1. 使用者與權限
-   - 使用者清單、操作欄一般USER / 管理者切換、停用確認。
+   - SSO 使用者清單、SSO 狀態唯讀顯示、操作欄一般USER / 管理者切換。
 2. 稽核日誌
    - 操作者、模組、動作、結果、Trace ID、異動前後、Token 用量異常通知。
 3. 使用統計
@@ -55,8 +55,8 @@ pnpm test
 ## Demo 操作建議
 
 1. 進入後臺首頁，確認左側「基本配置」側邊欄。
-2. 在使用者清單操作欄切換一般USER / 管理者。
-3. 停用一筆使用者，確認停用流程。
+2. 在使用者清單確認 SSO 有效 / SSO 停用 / 同步異常狀態只讀顯示。
+3. 在操作欄切換一般USER / 管理者，確認 CityGPT 後臺只控制角色，不控制 SSO 停用。
 4. 切到「稽核日誌」，確認 Trace ID、異動前後資料、敏感/異常事件與 Token 用量異常通知。
 5. 切到「使用統計」，切換 7 / 30 / 90 天，確認「每人流量統計」與「異常才進稽核」規則。
 6. 切到「回饋管理」，調整 1-10 分評分並將一筆回饋改成已完成。
@@ -65,11 +65,13 @@ pnpm test
 
 - 目前所有資料都是前端 mock，不連後端 API。
 - 角色目前只有 `user`（一般USER）與 `admin`（管理者）。
+- 帳號有效 / 停用由 SSO / AD 控制；CityGPT 後臺只接收並顯示 SSO 同步狀態。
 - 後臺准入目前由 `src/admin/permissions.ts` 控制，只有 `admin`（管理者）能進入後臺。
 - Mock data 在 `src/admin/data.ts` 與 `src/admin/AdminApp.tsx`。
 - 互動狀態存在 React local state，重新整理後會回到初始資料。
 - 後續 API 建議拆成：
   - backend admin users / admin access gate
+  - SSO user sync status
   - audit events
   - per-user traffic stats
   - token usage monthly aggregation / anomaly notification

@@ -26,7 +26,7 @@ export interface AdminUser {
   readonly name: string
   readonly email: string
   readonly role: AdminRole
-  readonly status: 'active' | 'suspended'
+  readonly status: 'sso_active' | 'sso_disabled' | 'sync_error'
   readonly lastLogin: string | null
 }
 

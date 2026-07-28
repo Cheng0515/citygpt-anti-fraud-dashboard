@@ -461,6 +461,7 @@ textarea:disabled {
 }
 
 .admin-pill.active,
+.admin-pill.sso_active,
 .admin-pill.completed,
 .admin-pill.success,
 .admin-pill.positive {
@@ -469,6 +470,7 @@ textarea:disabled {
 }
 
 .admin-pill.suspended,
+.admin-pill.sso_disabled,
 .admin-pill.failed,
 .admin-pill.negative {
   background: #fff1f2;
@@ -477,6 +479,7 @@ textarea:disabled {
 
 .admin-pill.pending,
 .admin-pill.indexing,
+.admin-pill.sync_error,
 .admin-pill.draft {
   background: #fff7ed;
   color: #c2410c;
@@ -497,6 +500,34 @@ textarea:disabled {
   align-self: start;
   display: grid;
   gap: 14px;
+}
+
+.sso-policy-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+  color: #28456f;
+}
+
+.sso-policy-card svg {
+  flex: 0 0 auto;
+  color: #1769ff;
+}
+
+.sso-policy-card strong,
+.sso-policy-card span {
+  display: block;
+}
+
+.sso-policy-card span {
+  margin-top: 4px;
+  color: #5a6680;
+  line-height: 1.55;
 }
 
 .citation-list span,
