@@ -72,7 +72,7 @@ const pageMeta: Record<
   },
   system: {
     label: '系統狀態',
-    description: '文件同步、讀取與搜尋資料狀態',
+    description: 'AI 能否引用文件與待處理問題',
     icon: <Activity size={18} />,
   },
 }
@@ -656,38 +656,69 @@ function SystemStatusPage({
   const [source, setSource] = useState('all')
   const [access, setAccess] = useState<'all' | KnowledgeDocument['access']>('all')
   const [status, setStatus] = useState<
-    'all' | 'published' | 'draft' | KnowledgeDocument['indexStatus']
+    'all' | 'ready' | 'needs_action' | 'processing' | 'not_published'
   >('all')
   const [selected, setSelected] = useState<KnowledgeDocument | null>(documents[0] ?? null)
   const sources = ['all', ...Array.from(new Set(documents.map((document) => document.source)))]
-  const failedCount = documents.filter(
-    (document) =>
-      document.syncStatus === 'failed' ||
-      document.readStatus === 'failed' ||
-      document.searchableStatus === 'failed',
+
+  const getServiceState = (document: KnowledgeDocument) => {
+    const pipeline = [document.syncStatus, document.readStatus, document.searchableStatus]
+    if (!document.published) {
+      return {
+        id: 'not_published' as const,
+        label: '未提供服務',
+        impact: '目前不會被 AI 引用，不影響使用者取得既有答案。',
+        nextAction: '若要提供使用，請先至既有文件系統完成上架與權限設定。',
+      }
+    }
+    if (pipeline.some((item) => item === 'failed' || item === 'waiting_retry')) {
+      return {
+        id: 'needs_action' as const,
+        label: '需要處理',
+        impact: 'AI 可能找不到這份文件，或仍引用不到最新內容。',
+        nextAction: '查看原因後重新執行；若仍失敗，請將文件名稱與狀態交給 RD 或文件來源窗口。',
+      }
+    }
+    if (pipeline.some((item) => item === 'processing')) {
+      return {
+        id: 'processing' as const,
+        label: '處理中',
+        impact: 'AI 尚未引用最新內容，完成前可能回答不到這份文件。',
+        nextAction: '目前不需操作；若長時間未完成，再交由 IT 或 RD 排查。',
+      }
+    }
+    return {
+      id: 'ready' as const,
+      label: 'AI 可引用',
+      impact: '文件已完成同步、讀取與搜尋資料建立，AI 可依權限引用。',
+      nextAction: '目前不需處理。',
+    }
+  }
+
+  const readyCount = documents.filter((document) => getServiceState(document).id === 'ready').length
+  const needsActionCount = documents.filter(
+    (document) => getServiceState(document).id === 'needs_action',
   ).length
-  const waitingRetryCount = documents.filter(
-    (document) =>
-      document.syncStatus === 'waiting_retry' ||
-      document.readStatus === 'waiting_retry' ||
-      document.searchableStatus === 'waiting_retry',
-  ).length
+  const affectedCount = documents.filter((document) => {
+    const serviceState = getServiceState(document).id
+    return document.published && (serviceState === 'needs_action' || serviceState === 'processing')
+  }).length
 
   const visible = documents.filter((document) => {
-    const lifecycle = document.published ? 'published' : 'draft'
     return (
       (source === 'all' || document.source === source) &&
       (access === 'all' || document.access === access) &&
-      (status === 'all' || document.indexStatus === status || lifecycle === status)
+      (status === 'all' || getServiceState(document).id === status)
     )
   })
+  const selectedState = selected ? getServiceState(selected) : null
 
   return (
     <div className="admin-grid">
       <div className="admin-main-column">
         <Panel
-          title="系統狀態"
-          subtitle="本期不做完整 RAG 文件管理；只監控文件同步、讀取與建立 AI 可搜尋資料。"
+          title="AI 回答可用狀態"
+          subtitle="快速確認哪些文件已能被 AI 引用、哪些問題可能影響縣府同仁取得答案。"
           action={
             <button
               type="button"
@@ -701,24 +732,30 @@ function SystemStatusPage({
         >
           <div className="system-summary-grid">
             <article>
-              <span>文件總數</span>
-              <strong>{documents.length}</strong>
+              <span>AI 已可引用</span>
+              <strong>{readyCount}</strong>
+              <small>份文件可正常回答</small>
             </article>
             <article>
-              <span>建立搜尋資料完成</span>
-              <strong>{documents.filter((document) => document.searchableStatus === 'completed').length}</strong>
+              <span>需要處理</span>
+              <strong>{needsActionCount}</strong>
+              <small>份文件有失敗或待重試</small>
             </article>
             <article>
-              <span>失敗 / 等待重試</span>
-              <strong>{failedCount + waitingRetryCount}</strong>
+              <span>可能影響回答</span>
+              <strong>{affectedCount}</strong>
+              <small>份已上架文件尚未就緒</small>
             </article>
           </div>
-          <section className="prd-note-card">
-            <strong>PRD 對齊方式</strong>
-            <span>
-              文件來源、權限與上架狀態只作為輔助資訊唯讀顯示；真正要交付的是同步、
-              讀取、建立搜尋資料的狀態與失敗原因。
-            </span>
+          <section className="system-value-card">
+            <div>
+              <strong>這頁對縣府的幫助</strong>
+              <span>驗收 AI 是否真的讀到已上架文件，避免文件存在、回答卻找不到。</span>
+            </div>
+            <div>
+              <strong>管理者要做的事</strong>
+              <span>只需優先處理「需要處理」項目；來源、權限與上架狀態維持唯讀查閱。</span>
+            </div>
           </section>
           <div className="admin-filters">
             <label>
@@ -748,58 +785,70 @@ function SystemStatusPage({
               </select>
             </label>
             <label>
-              狀態
+              回答狀態
               <select
                 value={status}
                 onChange={(event) =>
                   setStatus(
                     event.target.value as
                       | 'all'
-                      | 'published'
-                      | 'draft'
-                      | KnowledgeDocument['indexStatus'],
+                      | 'ready'
+                      | 'needs_action'
+                      | 'processing'
+                      | 'not_published',
                   )
                 }
               >
                 <option value="all">全部狀態</option>
-                <option value="published">已上架</option>
-                <option value="draft">未上架</option>
-                <option value="completed">可搜尋</option>
-                <option value="failed">失敗</option>
-                <option value="pending">等待索引</option>
-                <option value="indexing">索引中</option>
+                <option value="ready">AI 可引用</option>
+                <option value="needs_action">需要處理</option>
+                <option value="processing">處理中</option>
+                <option value="not_published">未提供服務</option>
               </select>
             </label>
           </div>
           <div className="system-doc-list">
-            {visible.map((document) => (
-              <button
-                key={document.id}
-                type="button"
-                className={selected?.id === document.id ? 'system-doc-card active' : 'system-doc-card'}
-                onClick={() => {
-                  setSelected(document)
-                  setNotice(`已留下查閱紀錄：${document.name} 文件狀態。`)
-                }}
-              >
-                <span className={`admin-pill ${document.indexStatus}`}>
-                  {indexStatusLabels[document.indexStatus]}
-                </span>
-                <strong>{document.name}</strong>
-                <small>
-                  {document.source} · {accessLabels[document.access]} ·{' '}
-                  {document.published ? '已上架' : '未上架'}
-                </small>
-              </button>
-            ))}
+            {visible.map((document) => {
+              const serviceState = getServiceState(document)
+              return (
+                <button
+                  key={document.id}
+                  type="button"
+                  className={selected?.id === document.id ? 'system-doc-card active' : 'system-doc-card'}
+                  onClick={() => {
+                    setSelected(document)
+                    setNotice(`已留下查閱紀錄：${document.name} 文件狀態。`)
+                  }}
+                >
+                  <span className={`service-state-pill ${serviceState.id}`}>
+                    {serviceState.label}
+                  </span>
+                  <strong>{document.name}</strong>
+                  <small>{serviceState.impact}</small>
+                  <small>
+                    {document.source} · {accessLabels[document.access]} ·{' '}
+                    {document.published ? '已上架' : '未上架'}
+                  </small>
+                </button>
+              )
+            })}
           </div>
         </Panel>
       </div>
       <aside className="admin-side-card system-detail">
-        <h2>文件處理狀態</h2>
-        {selected && (
+        <h2>這份文件會不會影響回答？</h2>
+        {selected && selectedState && (
           <>
             <p>{selected.name}</p>
+            <section className={`service-impact-card ${selectedState.id}`}>
+              <span>回答可用性</span>
+              <strong>{selectedState.label}</strong>
+              <p>{selectedState.impact}</p>
+            </section>
+            <section className="next-action-card">
+              <strong>建議處理</strong>
+              <span>{selectedState.nextAction}</span>
+            </section>
             <dl className="admin-detail-list">
               <div>
                 <dt>來源</dt>
@@ -818,6 +867,7 @@ function SystemStatusPage({
                 <dd>{formatDateTime(selected.lastSyncedAt)}</dd>
               </div>
             </dl>
+            <h3 className="detail-section-title">後台處理狀態</h3>
             <div className="pipeline-list">
               <div>
                 <span>同步文件</span>
@@ -839,17 +889,14 @@ function SystemStatusPage({
               </div>
             </div>
             <section className="failure-reason-card">
-              <strong>原因</strong>
-              <span>{selected.failureReason ?? '目前無失敗原因。'}</span>
+              <strong>系統訊息</strong>
+              <span>{selected.failureReason ?? '目前沒有需要處理的錯誤。'}</span>
             </section>
             <button
               type="button"
               className="admin-primary full"
               disabled={
-                !selected.failureReason &&
-                selected.syncStatus !== 'waiting_retry' &&
-                selected.readStatus !== 'waiting_retry' &&
-                selected.searchableStatus !== 'waiting_retry'
+                selectedState.id !== 'needs_action'
               }
               onClick={() => setNotice(`${selected.name} 已排入重新執行。`)}
             >
@@ -1139,6 +1186,26 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
       new Date(event.timestamp).getTime() >= cutoff,
   )
   const tokenAlert = events.find((event) => event.action === 'Token 用量異常')
+  const getAuditReason = (event: AuditEvent) => {
+    if (event.action === 'Token 用量異常') {
+      return '單一使用者本月 Token 已超過 300,000，系統建立事件並通知 IT 與 admin。'
+    }
+    if (event.operationType === 'login') {
+      return '登入與登入失敗會保留，供帳號存取、SSO 狀態與疑似暴力嘗試追查。'
+    }
+    if (event.operationType === 'download') {
+      return '下載與匯出可能帶出資料，因此保留操作者、範圍與時間。'
+    }
+    if (event.operationType === 'management') {
+      return '角色、回饋或系統設定被變更，需保留異動前後資料以便追溯。'
+    }
+    if (event.operationType === 'system') {
+      return '系統偵測到敏感、異常、門檻超標或服務錯誤，需要後續處理。'
+    }
+    return event.result === 'failed'
+      ? '此查詢被安全規則擋下或執行失敗，因此留下稽核紀錄。'
+      : '此事件涉及回饋、受管制查詢或需追溯的資料操作。'
+  }
 
   return (
     <div className="admin-grid">
@@ -1160,6 +1227,31 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
           <section className="retention-card">
             <strong>保存期限</strong>
             <span>操作紀錄至少保留 180 天；此 prototype 以事件時間模擬人員、時間與操作類型查詢。</span>
+          </section>
+          <div className="audit-definition-grid">
+            <article className="success">
+              <span>成功代表</span>
+              <strong>操作已完成</strong>
+              <p>權限與系統規則通過，要求的動作已執行；不代表 AI 回答內容一定正確。</p>
+            </article>
+            <article className="failed">
+              <span>失敗代表</span>
+              <strong>操作未完成或被擋下</strong>
+              <p>可能是 SSO 停用、權限不足、敏感規則、系統錯誤；不等於使用者惡意。</p>
+            </article>
+          </div>
+          <section className="audit-scope-card">
+            <div className="audit-scope-heading">
+              <strong>哪些事項會被稽核？</strong>
+              <span>保留能追責、涉及資料輸出或需要處理的事件。</span>
+            </div>
+            <div className="audit-scope-list">
+              <span><strong>登入與帳號</strong>登入成功／失敗、SSO 停用阻擋、異常嘗試</span>
+              <span><strong>管理操作</strong>角色異動、SSO 同步、回饋處理、文件狀態重試</span>
+              <span><strong>下載與匯出</strong>文件下載、稽核日誌匯出與資料範圍</span>
+              <span><strong>安全與異常</strong>敏感內容阻擋、系統錯誤、Token 超過 300,000／月</span>
+            </div>
+            <small>一般 AI 提問只做用量與品質統計；敏感、異常或失敗查詢才進入稽核日誌，且不保存完整 Prompt。</small>
           </section>
           <div className="admin-filters">
             <label>
@@ -1242,8 +1334,40 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
         <h2>事件細節</h2>
         {selected && (
           <>
-            <p>{selected.action}</p>
+            <section className={`audit-event-summary ${selected.result}`}>
+              <span className={`admin-pill ${selected.result}`}>
+                {selected.result === 'success' ? '成功' : '失敗'}
+              </span>
+              <strong>{selected.action}</strong>
+              <small>{formatDateTime(selected.timestamp)} · {selected.actor}</small>
+            </section>
+            <section className="audit-detail-block">
+              <strong>為什麼被記錄</strong>
+              <span>{getAuditReason(selected)}</span>
+            </section>
+            <section className={`audit-outcome-card ${selected.result}`}>
+              <strong>系統判定</strong>
+              <span>
+                {selected.result === 'success'
+                  ? '操作已完成，並留下可追溯紀錄。'
+                  : selected.permissionDecision.decision === 'denied'
+                    ? `操作已阻擋：${selected.permissionDecision.reason}`
+                    : '操作未完成或已由安全／異常規則阻擋。'}
+              </span>
+            </section>
             <dl className="admin-detail-list">
+              <div>
+                <dt>操作類型</dt>
+                <dd>{operationTypeLabels[selected.operationType]}</dd>
+              </div>
+              <div>
+                <dt>模組</dt>
+                <dd>{selected.module}</dd>
+              </div>
+              <div>
+                <dt>關聯資料</dt>
+                <dd>{selected.resource}</dd>
+              </div>
               <div>
                 <dt>Trace ID</dt>
                 <dd>{selected.traceId}</dd>
@@ -1251,10 +1375,6 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
               <div>
                 <dt>IP</dt>
                 <dd>{selected.ip}</dd>
-              </div>
-              <div>
-                <dt>操作類型</dt>
-                <dd>{operationTypeLabels[selected.operationType]}</dd>
               </div>
               <div>
                 <dt>權限判定</dt>
@@ -1265,16 +1385,19 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
                 </dd>
               </div>
             </dl>
-            <div className="before-after">
-              <section>
-                <strong>異動前</strong>
-                <pre>{JSON.stringify(selected.before, null, 2) || '無'}</pre>
-              </section>
-              <section>
-                <strong>異動後</strong>
-                <pre>{JSON.stringify(selected.after, null, 2) || '無'}</pre>
-              </section>
-            </div>
+            <details className="audit-snapshot">
+              <summary>查看異動資料快照</summary>
+              <div className="before-after">
+                <section>
+                  <strong>異動前</strong>
+                  <pre>{JSON.stringify(selected.before, null, 2) || '無'}</pre>
+                </section>
+                <section>
+                  <strong>異動後</strong>
+                  <pre>{JSON.stringify(selected.after, null, 2) || '無'}</pre>
+                </section>
+              </div>
+            </details>
           </>
         )}
         <section className="audit-rule-card">
@@ -1318,7 +1441,6 @@ function StatsPage({
   traffic: UserTrafficStats[]
 }) {
   const [range, setRange] = useState<7 | 30 | 90>(30)
-  const [selectedKpi, setSelectedKpi] = useState('totalQueries')
   const current = stats.find((item) => item.rangeDays === range) ?? stats[0]
   const rangeLabels: Record<7 | 30 | 90, string> = {
     7: '日',
@@ -1329,58 +1451,48 @@ function StatsPage({
   const alertUsers = traffic.filter((item) => item.alertLevel === 'alert').length
   const watchUsers = traffic.filter((item) => item.alertLevel === 'watch').length
   const totalMonthlyTokens = traffic.reduce((sum, item) => sum + item.monthlyTokens, 0)
-  const tokenLimit = traffic[0]?.tokenLimit ?? 300000
   const kpis = [
     {
       id: 'totalQueries',
       label: '總提問數',
       value: current.kpis.totalQueries.toLocaleString(),
-      definition: '使用者送出且被系統接收的提問總量。',
     },
     {
       id: 'activeUsers',
       label: '活躍使用者',
       value: current.kpis.activeUsers.toLocaleString(),
-      definition: '期間內至少提問一次的不重複使用者。',
     },
     {
       id: 'aiTokens',
       label: 'AI 使用量',
       value: current.kpis.aiTokens.toLocaleString(),
-      definition: '期間內所有互動累計消耗的 Token，作為成本控管與異常偵測依據。',
     },
     {
       id: 'satisfactionRate',
       label: '正向回饋率',
       value: `${Math.round(current.kpis.satisfactionRate * 100)}%`,
-      definition: '1-10 分回饋中，7 分以上或正向回饋占全部回饋的比例。',
     },
     {
       id: 'negativeFeedback',
       label: '負向回饋',
       value: current.negativeFeedback.count.toLocaleString(),
-      definition: '使用者給 1-6 分或選擇負向回饋的次數。',
     },
     {
       id: 'monthlyTokens',
       label: '本月 Token',
       value: totalMonthlyTokens.toLocaleString(),
-      definition: '每位使用者每次互動都累計 token，用於成本控管與異常偵測。',
     },
     {
       id: 'trafficAlerts',
       label: '用量觀察',
       value: `${alertUsers + watchUsers} 人`,
-      definition: '超過 80% 門檻先列入觀察；超過 300,000 tokens 才建立稽核與通知。',
     },
     {
       id: 'averageResponseMs',
       label: '平均回覆時間',
       value: `${current.kpis.averageResponseMs}ms`,
-      definition: '從送出問題到第一段回答完成的平均時間。',
     },
   ]
-  const selected = kpis.find((kpi) => kpi.id === selectedKpi) ?? kpis[0]
 
   return (
     <div className="admin-main-column full-width">
@@ -1404,40 +1516,13 @@ function StatsPage({
       >
         <div className="kpi-grid">
           {kpis.map((kpi) => (
-            <button
-              key={kpi.id}
-              type="button"
-              className={selectedKpi === kpi.id ? 'kpi-card active' : 'kpi-card'}
-              onClick={() => setSelectedKpi(kpi.id)}
-            >
+            <article key={kpi.id} className="kpi-card">
               <span>{kpi.label}</span>
               <strong>{kpi.value}</strong>
-            </button>
+            </article>
           ))}
         </div>
         <div className="stats-layout">
-          <section className="definition-card">
-            <h3>{selected.label}怎麼算？</h3>
-            <p>{selected.definition}</p>
-            <small>這裡刻意用白話解釋 KPI，避免管理者被迫理解資料欄位名稱。</small>
-          </section>
-          <section className="traffic-policy-card">
-            <h3>流量統計怎麼記？</h3>
-            <div className="traffic-policy-list">
-              <span>
-                <strong>每個人都記錄</strong>
-                月 token、提問次數、平均每日提問、最後使用時間。
-              </span>
-              <span>
-                <strong>不全部進稽核</strong>
-                一般使用只放統計，避免 1,000 人資料把稽核日誌洗版。
-              </span>
-              <span>
-                <strong>異常才發 alert</strong>
-                超過 {tokenLimit.toLocaleString()} tokens / 月，建立稽核事件並通知 IT / admin。
-              </span>
-            </div>
-          </section>
           <section className="traffic-watch-card">
             <h3>個人月用量監控</h3>
             <p>
@@ -1480,16 +1565,6 @@ function StatsPage({
                 )
               })}
             </div>
-          </section>
-          <section>
-            <h3>各功能使用頻率</h3>
-            {current.featureUsage.map((feature) => (
-              <div key={feature.name} className="progress-row">
-                <span>{feature.name}</span>
-                <progress max={current.kpis.totalQueries} value={feature.count} />
-                <strong>{feature.count.toLocaleString()}</strong>
-              </div>
-            ))}
           </section>
           <section>
             <h3>部門與角色用量</h3>

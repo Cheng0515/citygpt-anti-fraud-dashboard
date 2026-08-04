@@ -325,7 +325,6 @@
 .admin-row button,
 .range-switch button,
 .feedback-card,
-.kpi-card,
 .inline-upload button,
 .admin-modal-actions button {
   min-height: 42px;
@@ -542,6 +541,7 @@ textarea:disabled {
 .system-summary-grid article,
 .prd-note-card,
 .retention-card,
+.system-value-card,
 .failure-reason-card {
   border: 1px solid #e4ecf8;
   border-radius: 18px;
@@ -551,6 +551,7 @@ textarea:disabled {
 
 .system-summary-grid span,
 .system-summary-grid strong,
+.system-summary-grid small,
 .prd-note-card strong,
 .prd-note-card span,
 .retention-card strong,
@@ -561,6 +562,7 @@ textarea:disabled {
 }
 
 .system-summary-grid span,
+.system-summary-grid small,
 .prd-note-card span,
 .retention-card span,
 .failure-reason-card span {
@@ -573,6 +575,11 @@ textarea:disabled {
   font-size: 28px;
 }
 
+.system-summary-grid small {
+  margin-top: 3px;
+  font-size: 12px;
+}
+
 .prd-note-card,
 .retention-card {
   margin-bottom: 14px;
@@ -581,6 +588,33 @@ textarea:disabled {
 .system-doc-list {
   display: grid;
   gap: 10px;
+}
+
+.system-value-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+  background: #eef5ff;
+  border-color: #dbeafe;
+}
+
+.system-value-card div {
+  display: grid;
+  gap: 5px;
+}
+
+.system-value-card strong,
+.system-value-card span,
+.next-action-card strong,
+.next-action-card span {
+  display: block;
+}
+
+.system-value-card span,
+.next-action-card span {
+  color: #5a6680;
+  line-height: 1.55;
 }
 
 .system-doc-card {
@@ -596,6 +630,76 @@ textarea:disabled {
 .system-doc-card.active {
   background: #eaf2ff;
   border-color: rgba(23, 105, 255, 0.45);
+}
+
+.service-state-pill {
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.service-state-pill.ready,
+.service-impact-card.ready {
+  background: #ecfdf5;
+  color: #087443;
+  border-color: #a7f3d0;
+}
+
+.service-state-pill.needs_action,
+.service-impact-card.needs_action {
+  background: #fff1f2;
+  color: #be123c;
+  border-color: #fecdd3;
+}
+
+.service-state-pill.processing,
+.service-impact-card.processing {
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #fed7aa;
+}
+
+.service-state-pill.not_published,
+.service-impact-card.not_published {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.service-impact-card,
+.next-action-card {
+  display: grid;
+  gap: 6px;
+  border: 1px solid;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.service-impact-card span,
+.service-impact-card strong {
+  display: block;
+}
+
+.service-impact-card strong {
+  font-size: 22px;
+}
+
+.service-impact-card p {
+  margin: 0;
+  color: inherit;
+  line-height: 1.55;
+}
+
+.next-action-card {
+  background: #f8fbff;
+  border-color: #e4ecf8;
+}
+
+.detail-section-title {
+  margin: 2px 0 -2px;
+  font-size: 15px;
 }
 
 .pipeline-list {
@@ -699,6 +803,134 @@ textarea:disabled {
   white-space: pre-wrap;
   word-break: break-word;
   color: #475569;
+}
+
+.audit-definition-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.audit-definition-grid article {
+  display: grid;
+  gap: 5px;
+  border: 1px solid;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.audit-definition-grid article.success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #087443;
+}
+
+.audit-definition-grid article.failed {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+
+.audit-definition-grid span,
+.audit-definition-grid strong {
+  display: block;
+}
+
+.audit-definition-grid p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.55;
+}
+
+.audit-scope-card {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  background: #f8fbff;
+}
+
+.audit-scope-heading,
+.audit-scope-list span {
+  display: grid;
+  gap: 4px;
+}
+
+.audit-scope-heading span,
+.audit-scope-card small {
+  color: #5a6680;
+  line-height: 1.55;
+}
+
+.audit-scope-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.audit-scope-list span {
+  padding: 10px 11px;
+  border: 1px solid #e4ecf8;
+  border-radius: 13px;
+  background: white;
+  color: #5a6680;
+  line-height: 1.45;
+}
+
+.audit-scope-list strong {
+  color: #17233c;
+}
+
+.audit-event-summary,
+.audit-detail-block,
+.audit-outcome-card {
+  display: grid;
+  gap: 6px;
+  padding: 13px;
+  border: 1px solid #e4ecf8;
+  border-radius: 16px;
+  background: #f8fbff;
+}
+
+.audit-event-summary strong {
+  font-size: 18px;
+}
+
+.audit-event-summary small,
+.audit-detail-block span,
+.audit-outcome-card span {
+  color: #5a6680;
+  line-height: 1.5;
+}
+
+.audit-outcome-card.success {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
+
+.audit-outcome-card.failed {
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+
+.audit-snapshot {
+  border: 1px solid #e4ecf8;
+  border-radius: 16px;
+  background: #f8fbff;
+  padding: 12px;
+}
+
+.audit-snapshot summary {
+  color: #28456f;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.audit-snapshot[open] summary {
+  margin-bottom: 12px;
 }
 
 .audit-rule-card {
@@ -817,6 +1049,8 @@ textarea:disabled {
 .kpi-card {
   text-align: left;
   padding: 16px;
+  min-height: 106px;
+  border-radius: 18px;
   background: #f8fbff;
   border: 1px solid #e4ecf8;
   color: #17233c;
@@ -833,42 +1067,10 @@ textarea:disabled {
   letter-spacing: -0.04em;
 }
 
-.kpi-card.active {
-  background: #eaf2ff;
-  border-color: rgba(23, 105, 255, 0.36);
-}
-
 .stats-layout {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
-}
-
-.traffic-policy-card {
-  background: #f8fbff;
-  border: 1px solid #e4ecf8;
-  border-radius: 18px;
-}
-
-.traffic-policy-list {
-  display: grid;
-  gap: 9px;
-  margin-top: 10px;
-}
-
-.traffic-policy-list span {
-  display: grid;
-  gap: 3px;
-  padding: 11px 12px;
-  border-radius: 14px;
-  background: white;
-  border: 1px solid #e4ecf8;
-  color: #5a6680;
-  line-height: 1.55;
-}
-
-.traffic-policy-list strong {
-  color: #17233c;
 }
 
 .traffic-watch-card {
@@ -1145,7 +1347,9 @@ progress {
 
   .kpi-grid,
   .system-summary-grid,
-  .stats-layout {
+  .stats-layout,
+  .audit-definition-grid,
+  .audit-scope-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1167,7 +1371,10 @@ progress {
   .admin-sidebar nav,
   .kpi-grid,
   .system-summary-grid,
-  .stats-layout {
+  .stats-layout,
+  .audit-definition-grid,
+  .audit-scope-list,
+  .system-value-card {
     grid-template-columns: 1fr;
   }
 
