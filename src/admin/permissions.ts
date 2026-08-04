@@ -18,7 +18,6 @@ const ROLE_ACCESS: Readonly<Record<AdminRole, RoleAccess>> = Object.freeze({
       'stats',
       'audit',
       'feedback',
-      'system',
     ]),
     permissions: freezeList<Permission>([
       'users.manage',

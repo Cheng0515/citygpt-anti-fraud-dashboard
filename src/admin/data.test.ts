@@ -54,15 +54,15 @@ describe('admin sample data', () => {
     expect(knowledgeDocuments.some((document) => document.failureReason)).toBe(true)
   })
 
-  it('keeps a detailed, immutable audit trail with both outcomes', () => {
+  it('keeps a detailed, immutable audit trail for errors only', () => {
     expectTypeOf(auditEvents).toEqualTypeOf<readonly AuditEvent[]>()
-    expect(auditEvents.length).toBeGreaterThanOrEqual(8)
+    expect(auditEvents.length).toBeGreaterThanOrEqual(6)
     expect(auditEvents.every((event) => event.traceId.length > 0)).toBe(true)
     expect(
       auditEvents.every((event) => 'before' in event && 'after' in event),
     ).toBe(true)
     expect(new Set(auditEvents.map((event) => event.result))).toEqual(
-      new Set(['success', 'failed']),
+      new Set(['failed']),
     )
     expect(new Set(auditEvents.map((event) => event.operationType))).toEqual(
       new Set(['login', 'query', 'download', 'management', 'system']),

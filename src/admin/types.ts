@@ -1,6 +1,6 @@
 export type AdminRole = 'user' | 'admin'
 
-export type AdminPage = 'users' | 'stats' | 'audit' | 'feedback' | 'system'
+export type AdminPage = 'users' | 'stats' | 'audit' | 'feedback'
 
 export type Permission =
   | 'users.manage'

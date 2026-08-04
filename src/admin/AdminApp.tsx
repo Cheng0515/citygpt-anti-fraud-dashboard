@@ -1,5 +1,4 @@
 import {
-  Activity,
   Archive,
   ArrowLeft,
   BarChart3,
@@ -28,7 +27,6 @@ import {
   adminUsers,
   auditEvents,
   feedbackItems,
-  knowledgeDocuments,
   usageStats,
   userTrafficStats,
 } from './data'
@@ -62,18 +60,13 @@ const pageMeta: Record<
   },
   audit: {
     label: '稽核日誌',
-    description: '追蹤誰在何時做了什麼',
+    description: '只追蹤需要處理的錯誤與異常',
     icon: <History size={18} />,
   },
   feedback: {
     label: '回饋管理',
     description: '處理正負回饋與改善任務',
     icon: <MessageSquare size={18} />,
-  },
-  system: {
-    label: '系統狀態',
-    description: 'AI 能否引用文件與待處理問題',
-    icon: <Activity size={18} />,
   },
 }
 
@@ -1166,20 +1159,19 @@ function KnowledgeAgentsPage({
 }
 
 function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (message: string) => void }) {
-  const [result, setResult] = useState('all')
   const [module, setModule] = useState('all')
   const [actor, setActor] = useState('all')
   const [operationType, setOperationType] = useState('all')
   const [timeRange, setTimeRange] = useState('180')
-  const [selected, setSelected] = useState<AuditEvent | null>(events[0] ?? null)
-  const modules = ['all', ...Array.from(new Set(events.map((event) => event.module)))]
-  const actors = ['all', ...Array.from(new Set(events.map((event) => event.actor)))]
-  const latestTimestamp = Math.max(...events.map((event) => new Date(event.timestamp).getTime()))
+  const errorEvents = events.filter((event) => event.result === 'failed')
+  const [selected, setSelected] = useState<AuditEvent | null>(errorEvents[0] ?? null)
+  const modules = ['all', ...Array.from(new Set(errorEvents.map((event) => event.module)))]
+  const actors = ['all', ...Array.from(new Set(errorEvents.map((event) => event.actor)))]
+  const latestTimestamp = Math.max(...errorEvents.map((event) => new Date(event.timestamp).getTime()))
   const rangeDays = Number(timeRange)
   const cutoff = latestTimestamp - rangeDays * 24 * 60 * 60 * 1000
-  const visible = events.filter(
+  const visible = errorEvents.filter(
     (event) =>
-      (result === 'all' || event.result === result) &&
       (module === 'all' || event.module === module) &&
       (actor === 'all' || event.actor === actor) &&
       (operationType === 'all' || event.operationType === operationType) &&
@@ -1191,13 +1183,13 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
       return '單一使用者本月 Token 已超過 300,000，系統建立事件並通知 IT 與 admin。'
     }
     if (event.operationType === 'login') {
-      return '登入與登入失敗會保留，供帳號存取、SSO 狀態與疑似暴力嘗試追查。'
+      return 'CityGPT 只保留 SSO 回傳的拒絕、停用、串接驗證錯誤與後臺准入阻擋。'
     }
     if (event.operationType === 'download') {
-      return '下載與匯出可能帶出資料，因此保留操作者、範圍與時間。'
+      return 'CityGPT 只保留自己產生的匯出，以及由 CityGPT 代理下載時的權限拒絕或大量下載。'
     }
     if (event.operationType === 'management') {
-      return '角色、回饋或系統設定被變更，需保留異動前後資料以便追溯。'
+      return '角色、SSO 同步或回饋處理未完成，需要管理者確認原因或重新執行。'
     }
     if (event.operationType === 'system') {
       return '系統偵測到敏感、異常、門檻超標或服務錯誤，需要後續處理。'
@@ -1212,7 +1204,7 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
       <div className="admin-main-column">
         <Panel
           title="稽核日誌"
-          subtitle="此頁只提供檢視與匯出請求，不提供任何修改操作。"
+          subtitle="正常操作不寫入此頁，只保留需要 IT 或管理者處理的錯誤與異常。"
           action={
             <button
               type="button"
@@ -1228,30 +1220,22 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
             <strong>保存期限</strong>
             <span>操作紀錄至少保留 180 天；此 prototype 以事件時間模擬人員、時間與操作類型查詢。</span>
           </section>
-          <div className="audit-definition-grid">
-            <article className="success">
-              <span>成功代表</span>
-              <strong>操作已完成</strong>
-              <p>權限與系統規則通過，要求的動作已執行；不代表 AI 回答內容一定正確。</p>
-            </article>
-            <article className="failed">
-              <span>失敗代表</span>
-              <strong>操作未完成或被擋下</strong>
-              <p>可能是 SSO 停用、權限不足、敏感規則、系統錯誤；不等於使用者惡意。</p>
-            </article>
-          </div>
           <section className="audit-scope-card">
             <div className="audit-scope-heading">
-              <strong>哪些事項會被稽核？</strong>
-              <span>保留能追責、涉及資料輸出或需要處理的事件。</span>
+              <strong>哪些錯誤會被記錄？</strong>
+              <span>只保留需要追查、通知或重新處理的異常事件。</span>
             </div>
             <div className="audit-scope-list">
-              <span><strong>登入與帳號</strong>登入成功／失敗、SSO 停用阻擋、異常嘗試</span>
-              <span><strong>管理操作</strong>角色異動、SSO 同步、回饋處理、文件狀態重試</span>
-              <span><strong>下載與匯出</strong>文件下載、稽核日誌匯出與資料範圍</span>
-              <span><strong>安全與異常</strong>敏感內容阻擋、系統錯誤、Token 超過 300,000／月</span>
+              <span><strong>SSO 與准入</strong>SSO 拒絕／停用、串接驗證錯誤、一般USER進入後臺被擋</span>
+              <span><strong>管理操作</strong>管理者角色異動、SSO 使用者同步、回饋儲存失敗</span>
+              <span><strong>CityGPT 匯出</strong>稽核日誌匯出失敗；若由 CityGPT 代理下載，再記權限拒絕或大量下載</span>
+              <span><strong>安全與異常</strong>敏感內容阻擋、權限拒絕、系統錯誤、Token 超過 300,000／月</span>
             </div>
             <small>一般 AI 提問只做用量與品質統計；敏感、異常或失敗查詢才進入稽核日誌，且不保存完整 Prompt。</small>
+            <div className="audit-boundary-note">
+              <span><strong>SSO 負責：</strong>密碼輸錯、可疑 IP／地點、暴力登入等身分驗證異常。</span>
+              <span><strong>來源系統負責：</strong>SharePoint 等文件的實際下載、權限阻擋與大量下載；CityGPT 不重複判斷。</span>
+            </div>
           </section>
           <div className="admin-filters">
             <label>
@@ -1294,14 +1278,6 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
                 ))}
               </select>
             </label>
-            <label>
-              結果
-              <select value={result} onChange={(event) => setResult(event.target.value)}>
-                <option value="all">全部結果</option>
-                <option value="success">成功</option>
-                <option value="failed">失敗</option>
-              </select>
-            </label>
           </div>
           <div className="admin-table audit-table">
             <div className="admin-table-head">
@@ -1310,7 +1286,7 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
               <span>類型</span>
               <span>模組</span>
               <span>動作</span>
-              <span>結果</span>
+              <span>處理</span>
             </div>
             {visible.map((event) => (
               <article key={event.id} className="admin-row">
@@ -1320,7 +1296,6 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
                 <span>{event.module}</span>
                 <span>{event.action}</span>
                 <div className="admin-row-actions">
-                  <span className={`admin-pill ${event.result}`}>{event.result === 'success' ? '成功' : '失敗'}</span>
                   <button type="button" onClick={() => setSelected(event)}>
                     查看細節
                   </button>
@@ -1334,10 +1309,8 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
         <h2>事件細節</h2>
         {selected && (
           <>
-            <section className={`audit-event-summary ${selected.result}`}>
-              <span className={`admin-pill ${selected.result}`}>
-                {selected.result === 'success' ? '成功' : '失敗'}
-              </span>
+            <section className="audit-event-summary failed">
+              <span className="admin-pill failed">異常</span>
               <strong>{selected.action}</strong>
               <small>{formatDateTime(selected.timestamp)} · {selected.actor}</small>
             </section>
@@ -1345,13 +1318,15 @@ function AuditPage({ events, setNotice }: { events: AuditEvent[]; setNotice: (me
               <strong>為什麼被記錄</strong>
               <span>{getAuditReason(selected)}</span>
             </section>
-            <section className={`audit-outcome-card ${selected.result}`}>
-              <strong>系統判定</strong>
+            <section className="audit-outcome-card failed">
+              <strong>錯誤原因</strong>
               <span>
-                {selected.result === 'success'
-                  ? '操作已完成，並留下可追溯紀錄。'
-                  : selected.permissionDecision.decision === 'denied'
-                    ? `操作已阻擋：${selected.permissionDecision.reason}`
+                {selected.permissionDecision.decision === 'denied'
+                  ? `操作已阻擋：${selected.permissionDecision.reason}`
+                  : selected.action === 'Token 用量異常'
+                    ? '本月 Token 已超過 300,000，系統已通知 IT 與 admin。'
+                  : selected.after?.reason
+                    ? String(selected.after.reason)
                     : '操作未完成或已由安全／異常規則阻擋。'}
               </span>
             </section>
@@ -1447,9 +1422,10 @@ function StatsPage({
     30: '週',
     90: '月',
   }
-  const sortedTraffic = [...traffic].sort((a, b) => b.monthlyTokens - a.monthlyTokens)
-  const alertUsers = traffic.filter((item) => item.alertLevel === 'alert').length
-  const watchUsers = traffic.filter((item) => item.alertLevel === 'watch').length
+  const anomalousTraffic = traffic
+    .filter((item) => item.alertLevel === 'alert')
+    .sort((a, b) => b.monthlyTokens - a.monthlyTokens)
+  const alertUsers = anomalousTraffic.length
   const totalMonthlyTokens = traffic.reduce((sum, item) => sum + item.monthlyTokens, 0)
   const kpis = [
     {
@@ -1484,8 +1460,8 @@ function StatsPage({
     },
     {
       id: 'trafficAlerts',
-      label: '用量觀察',
-      value: `${alertUsers + watchUsers} 人`,
+      label: '用量異常',
+      value: `${alertUsers} 人`,
     },
     {
       id: 'averageResponseMs',
@@ -1524,25 +1500,19 @@ function StatsPage({
         </div>
         <div className="stats-layout">
           <section className="traffic-watch-card">
-            <h3>個人月用量監控</h3>
+            <h3>個人月用量異常</h3>
             <p>
-              目前 {alertUsers} 人已異常、{watchUsers} 人接近門檻；稽核日誌只收已異常與管理操作。
+              只顯示本月超過 300,000 tokens 的使用者；目前 {alertUsers} 人需要由 IT 或 admin 確認。
             </p>
-            <div className="traffic-table" role="table" aria-label="個人月流量統計">
+            <div className="traffic-table" role="table" aria-label="個人月 Token 異常">
               <div className="traffic-row traffic-head" role="row">
                 <span>使用者</span>
                 <span>本月 token</span>
                 <span>狀態</span>
                 <span>處理方式</span>
               </div>
-              {sortedTraffic.map((item) => {
+              {anomalousTraffic.map((item) => {
                 const ratio = Math.round((item.monthlyTokens / item.tokenLimit) * 100)
-                const statusLabel =
-                  item.alertLevel === 'alert'
-                    ? '已 alert'
-                    : item.alertLevel === 'watch'
-                      ? '觀察'
-                      : '正常'
 
                 return (
                   <div key={item.id} className="traffic-row" role="row">
@@ -1557,7 +1527,7 @@ function StatsPage({
                       </small>
                     </span>
                     <span>
-                      <em className={`traffic-status ${item.alertLevel}`}>{statusLabel}</em>
+                      <em className="traffic-status alert">已通知</em>
                       <small>{ratio}%</small>
                     </span>
                     <span>{item.note}</span>
@@ -1859,9 +1829,6 @@ export default function AdminApp({ onExit }: { onExit?: () => void }) {
   const [agents, setAgents] = useState<KnowledgeAgent[]>(() =>
     knowledgeAgentSamples.map((agent) => ({ ...agent, allowedGroups: [...agent.allowedGroups] })),
   )
-  const [documents, setDocuments] = useState<KnowledgeDocument[]>(() =>
-    knowledgeDocuments.map((document) => ({ ...document })),
-  )
   const [feedback, setFeedback] = useState<FeedbackItem[]>(() =>
     feedbackItems.map((item) => ({ ...item, tags: [...item.tags] })),
   )
@@ -1885,7 +1852,7 @@ export default function AdminApp({ onExit }: { onExit?: () => void }) {
         <div className="admin-brand">
           <span>CG</span>
           <div>
-            <strong>CityGPT</strong>
+            <strong>AI知識代理人</strong>
             <small>管理後臺 Prototype</small>
           </div>
         </div>
@@ -1954,15 +1921,12 @@ export default function AdminApp({ onExit }: { onExit?: () => void }) {
               setNotice={setNotice}
             />
           )}
-          {page === 'system' && (
-            <SystemStatusPage documents={documents} setNotice={setNotice} />
-          )}
         </section>
         <footer className="admin-footer">
           <Filter size={16} />
           這版 prototype 只模擬操作，不連真實 API；所有異動都留在瀏覽器本機狀態。
           <ClipboardList size={16} />
-          驗收重點：SSO 權限、日週月統計、180 天稽核、回饋品質、文件系統狀態。
+          驗收重點：SSO 權限、日週月統計、180 天稽核與回饋品質。
           <FileSearch size={16} />
           所有工程細節都收在後面，不出現在主要操作路徑。
         </footer>

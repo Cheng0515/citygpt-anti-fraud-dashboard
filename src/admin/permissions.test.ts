@@ -33,7 +33,6 @@ describe('admin permissions', () => {
       'stats',
       'audit',
       'feedback',
-      'system',
     ])
     for (const permission of permissions) {
       expect(can('admin', permission), permission).toBe(true)
@@ -61,7 +60,6 @@ describe('admin permissions', () => {
       'stats',
       'audit',
       'feedback',
-      'system',
     ])
   })
 })

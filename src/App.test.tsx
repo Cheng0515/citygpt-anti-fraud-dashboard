@@ -9,6 +9,7 @@ describe('CityGPT admin demo', () => {
   it('opens directly into the management backend', () => {
     render(<App />)
 
+    expect(screen.getByText('AI知識代理人')).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: '使用者與權限' }),
     ).toBeInTheDocument()
@@ -25,10 +26,10 @@ describe('CityGPT admin demo', () => {
       '稽核日誌',
       '使用統計',
       '回饋管理',
-      '系統狀態',
     ]) {
       expect(screen.getByRole('button', { name: new RegExp(label) })).toBeInTheDocument()
     }
+    expect(screen.queryByRole('button', { name: /系統狀態/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /知識代理人管理/ })).not.toBeInTheDocument()
   })
 
@@ -79,12 +80,15 @@ describe('CityGPT admin demo', () => {
     expect(screen.getAllByText('Token 用量異常').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Token 用量異常規則')).toBeInTheDocument()
     expect(screen.getByText(/300,000 tokens \/ 月/)).toBeInTheDocument()
-    expect(screen.getByText('成功代表')).toBeInTheDocument()
-    expect(screen.getByText('失敗代表')).toBeInTheDocument()
-    expect(screen.getByText('哪些事項會被稽核？')).toBeInTheDocument()
+    expect(screen.queryByText('成功代表')).not.toBeInTheDocument()
+    expect(screen.queryByText('失敗代表')).not.toBeInTheDocument()
+    expect(screen.getByText('哪些錯誤會被記錄？')).toBeInTheDocument()
+    expect(screen.getByText(/密碼輸錯、可疑 IP／地點/)).toBeInTheDocument()
+    expect(screen.getByText(/SharePoint 等文件的實際下載/)).toBeInTheDocument()
     expect(screen.getByText(/一般 AI 提問只做用量與品質統計/)).toBeInTheDocument()
     expect(screen.getByText('為什麼被記錄')).toBeInTheDocument()
-    expect(screen.getByText('系統判定')).toBeInTheDocument()
+    expect(screen.getByText('錯誤原因')).toBeInTheDocument()
+    expect(screen.queryByLabelText('結果')).not.toBeInTheDocument()
     expect(screen.getAllByText(/IT/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/admin/).length).toBeGreaterThanOrEqual(1)
   })
@@ -101,31 +105,22 @@ describe('CityGPT admin demo', () => {
     expect(screen.getByText('部門與角色用量')).toBeInTheDocument()
     expect(screen.getByText('常被引用文件')).toBeInTheDocument()
     expect(screen.getByText('找不到答案 / 低相關度')).toBeInTheDocument()
-    expect(screen.getByText('個人月用量監控')).toBeInTheDocument()
+    expect(screen.getByText('個人月用量異常')).toBeInTheDocument()
     expect(screen.queryByText('各功能使用頻率')).not.toBeInTheDocument()
     expect(screen.queryByText('流量統計怎麼記？')).not.toBeInTheDocument()
     expect(screen.queryByText('總提問數怎麼算？')).not.toBeInTheDocument()
     expect(screen.getByText('382,400')).toBeInTheDocument()
-    expect(screen.getByText('已 alert')).toBeInTheDocument()
-    expect(screen.getByText('觀察')).toBeInTheDocument()
+    expect(screen.getByText('已通知')).toBeInTheDocument()
+    expect(screen.queryByText('268,900')).not.toBeInTheDocument()
+    expect(screen.queryByText('觀察')).not.toBeInTheDocument()
+    expect(screen.queryByText('正常')).not.toBeInTheDocument()
   })
 
-  it('shows a lightweight system status page instead of a heavy RAG management page', () => {
+  it('removes the system status page from this management scope', () => {
     render(<App />)
 
-    fireEvent.click(screen.getByRole('button', { name: /系統狀態/ }))
-
-    expect(screen.getByRole('heading', { name: 'AI 回答可用狀態' })).toBeInTheDocument()
-    expect(screen.getByText('這頁對縣府的幫助')).toBeInTheDocument()
-    expect(screen.getByText('AI 已可引用')).toBeInTheDocument()
-    expect(screen.getByText('可能影響回答')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: '這份文件會不會影響回答？' })).toBeInTheDocument()
-    expect(screen.getByText('回答可用性')).toBeInTheDocument()
-    expect(screen.getByText('建議處理')).toBeInTheDocument()
-    expect(screen.getByText('同步文件')).toBeInTheDocument()
-    expect(screen.getByText('讀取內容')).toBeInTheDocument()
-    expect(screen.getByText('建立 AI 可搜尋資料')).toBeInTheDocument()
-    expect(screen.getByText('重新執行')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /系統狀態/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('AI 回答可用狀態')).not.toBeInTheDocument()
     expect(screen.queryByText('知識代理人管理')).not.toBeInTheDocument()
   })
 })

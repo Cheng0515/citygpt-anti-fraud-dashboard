@@ -865,6 +865,22 @@ textarea:disabled {
   line-height: 1.55;
 }
 
+.audit-boundary-note {
+  display: grid;
+  gap: 7px;
+  padding-top: 11px;
+  border-top: 1px solid #dbeafe;
+}
+
+.audit-boundary-note span {
+  color: #475569;
+  line-height: 1.5;
+}
+
+.audit-boundary-note strong {
+  color: #28456f;
+}
+
 .audit-scope-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
