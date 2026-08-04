@@ -57,6 +57,19 @@ describe('CityGPT admin demo', () => {
     expect(screen.queryByRole('dialog', { name: '確認停用使用者' })).not.toBeInTheDocument()
   })
 
+  it('shows SSO departments as read-only and filters users by department', () => {
+    render(<App />)
+
+    expect(screen.getByText('部門', { selector: '.admin-table-head span' })).toBeInTheDocument()
+    expect(screen.getAllByText('民政處').length).toBeGreaterThanOrEqual(1)
+    expect(screen.queryByLabelText(/王小明.*部門/)).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('部門'), { target: { value: '民政處' } })
+
+    expect(screen.getByText('王小明')).toBeInTheDocument()
+    expect(screen.queryByText('林怡君')).not.toBeInTheDocument()
+  })
+
   it('shows feedback rating as a 1 to 10 score', () => {
     render(<App />)
 

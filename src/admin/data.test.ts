@@ -34,6 +34,7 @@ describe('admin sample data', () => {
     expect(new Set(adminUsers.map((user) => user.role))).toEqual(
       new Set(['user', 'admin']),
     )
+    expect(adminUsers.every((user) => user.department.length > 0)).toBe(true)
 
     expect(knowledgeDocuments.length).toBeGreaterThanOrEqual(7)
     expect(knowledgeDocuments).toContainEqual(

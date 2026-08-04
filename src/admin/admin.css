@@ -387,7 +387,7 @@ textarea:disabled {
 
 .user-table .admin-table-head,
 .user-table .admin-row {
-  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  grid-template-columns: 1.8fr 1fr 0.9fr 1fr 1.35fr;
 }
 
 .knowledge-table .admin-table-head,

@@ -311,13 +311,16 @@ function UsersPage({
 }) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<'all' | AdminUser['status']>('all')
+  const [department, setDepartment] = useState('all')
   const canManage = can(role, 'users.manage')
+  const departments = Array.from(new Set(users.map((user) => user.department)))
 
   const visible = users.filter((user) => {
-    const text = `${user.name} ${user.email}`.toLowerCase()
+    const text = `${user.name} ${user.email} ${user.department}`.toLowerCase()
     return (
       text.includes(query.toLowerCase()) &&
-      (status === 'all' || user.status === status)
+      (status === 'all' || user.status === status) &&
+      (department === 'all' || user.department === department)
     )
   })
 
@@ -338,15 +341,15 @@ function UsersPage({
         {!canManage && <EmptyPermission label="管理使用者" />}
         <Panel
           title="SSO 使用者清單"
-          subtitle="帳號是否有效由 SSO / AD 控制；CityGPT 後臺只管理一般USER與管理者角色。"
+          subtitle="帳號與部門資料由 SSO / AD 帶入；本後臺只管理一般USER與管理者角色。"
         >
           <section className="sso-policy-card">
             <ShieldCheck size={18} />
             <div>
               <strong>帳號生命週期以 SSO 為準</strong>
               <span>
-                停用、離職與全縣帳號有效性不在 CityGPT 後臺操作；這裡只顯示 SSO
-                同步狀態，並設定誰是管理者。
+                停用、離職、部門與全縣帳號有效性不在本後臺操作；這裡只顯示 SSO
+                同步資料，並設定誰是管理者。
               </span>
             </div>
           </section>
@@ -356,7 +359,7 @@ function UsersPage({
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="搜尋姓名或 Email"
+                placeholder="搜尋姓名、Email 或部門"
               />
             </label>
             <label>
@@ -373,13 +376,25 @@ function UsersPage({
                 <option value="sync_error">同步異常</option>
               </select>
             </label>
+            <label>
+              部門
+              <select value={department} onChange={(event) => setDepartment(event.target.value)}>
+                <option value="all">全部部門</option>
+                {departments.map((departmentName) => (
+                  <option key={departmentName} value={departmentName}>
+                    {departmentName}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           <div className="admin-table user-table">
             <div className="admin-table-head">
               <span>使用者</span>
+              <span>部門</span>
               <span>SSO 狀態</span>
               <span>最後登入</span>
-              <span>CityGPT 角色</span>
+              <span>後臺角色</span>
             </div>
             {visible.map((user) => (
               <article key={user.id} className="admin-row">
@@ -387,6 +402,7 @@ function UsersPage({
                   <strong>{user.name}</strong>
                   <small>{user.email}</small>
                 </div>
+                <span>{user.department}</span>
                 <span className={`admin-pill ${user.status}`}>{userStatusLabels[user.status]}</span>
                 <span>{formatDateTime(user.lastLogin)}</span>
                 <div className="admin-row-actions">
