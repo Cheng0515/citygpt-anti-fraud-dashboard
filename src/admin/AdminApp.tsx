@@ -55,7 +55,7 @@ const pageMeta: Record<
   },
   stats: {
     label: '使用統計',
-    description: '日週月 KPI、Token 與問題來源',
+    description: '日月年提問統計與用量排名',
     icon: <BarChart3 size={18} />,
   },
   audit: {
@@ -1434,33 +1434,30 @@ function StatsPage({
   const [range, setRange] = useState<7 | 30 | 90>(30)
   const current = stats.find((item) => item.rangeDays === range) ?? stats[0]
   const today = new Date()
-  const currentDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  const previousDay = new Date(currentDay)
-  previousDay.setDate(previousDay.getDate() - 1)
-  const daysSinceMonday = (currentDay.getDay() + 6) % 7
-  const currentWeekStart = new Date(currentDay)
-  currentWeekStart.setDate(currentWeekStart.getDate() - daysSinceMonday)
-  const previousWeekStart = new Date(currentWeekStart)
-  previousWeekStart.setDate(previousWeekStart.getDate() - 7)
-  const previousWeekEnd = new Date(currentWeekStart)
-  previousWeekEnd.setDate(previousWeekEnd.getDate() - 1)
-  const previousMonthStart = new Date(currentDay.getFullYear(), currentDay.getMonth() - 1, 1)
-  const previousMonthEnd = new Date(currentDay.getFullYear(), currentDay.getMonth(), 0)
+  const padDatePart = (value: number) => String(value).padStart(2, '0')
+  const todayValue = `${today.getFullYear()}-${padDatePart(today.getMonth() + 1)}-${padDatePart(today.getDate())}`
+  const currentMonthValue = todayValue.slice(0, 7)
+  const [selectedDay, setSelectedDay] = useState(todayValue)
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthValue)
+  const [selectedYear, setSelectedYear] = useState(String(today.getFullYear()))
   const formatRangeDate = (date: Date) =>
     new Intl.DateTimeFormat('zh-TW', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
     }).format(date)
+  const [monthYear, monthNumber] = selectedMonth.split('-').map(Number)
+  const selectedMonthStart = new Date(monthYear, monthNumber - 1, 1)
+  const selectedMonthEnd = new Date(monthYear, monthNumber, 0)
   const rangeMeta: Record<7 | 30 | 90, { label: string; dates: string }> = {
-    7: { label: '上一日', dates: formatRangeDate(previousDay) },
+    7: { label: '日', dates: selectedDay.replaceAll('-', '/') },
     30: {
-      label: '上週',
-      dates: `${formatRangeDate(previousWeekStart)}－${formatRangeDate(previousWeekEnd)}`,
+      label: '月',
+      dates: `${formatRangeDate(selectedMonthStart)}－${formatRangeDate(selectedMonthEnd)}`,
     },
     90: {
-      label: '上個月',
-      dates: `${formatRangeDate(previousMonthStart)}－${formatRangeDate(previousMonthEnd)}`,
+      label: '年',
+      dates: `${selectedYear}/01/01－${selectedYear}/12/31`,
     },
   }
   const rankedTraffic = [...traffic].sort((a, b) => b.monthlyTokens - a.monthlyTokens)
@@ -1500,13 +1497,56 @@ function StatsPage({
                 className={range === days ? 'active' : ''}
                 onClick={() => setRange(days)}
               >
-                <span>{rangeMeta[days].label}</span>
-                <small>{rangeMeta[days].dates}</small>
+                {rangeMeta[days].label}
               </button>
             ))}
           </div>
         }
       >
+        <section className="stats-time-filter" aria-label="選擇統計時間">
+          <div>
+            <strong>選擇時間區塊</strong>
+            <span>先選日、月或年，再指定要查看的實際時間。</span>
+          </div>
+          {range === 7 && (
+            <label>
+              選擇日期
+              <input
+                type="date"
+                value={selectedDay}
+                max={todayValue}
+                onChange={(event) => event.target.value && setSelectedDay(event.target.value)}
+              />
+            </label>
+          )}
+          {range === 30 && (
+            <label>
+              選擇月份
+              <input
+                type="month"
+                value={selectedMonth}
+                max={currentMonthValue}
+                onChange={(event) => event.target.value && setSelectedMonth(event.target.value)}
+              />
+            </label>
+          )}
+          {range === 90 && (
+            <label>
+              選擇年度
+              <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)}>
+                {[0, 1, 2, 3].map((offset) => {
+                  const year = String(today.getFullYear() - offset)
+                  return (
+                    <option key={year} value={year}>
+                      {year} 年
+                    </option>
+                  )
+                })}
+              </select>
+            </label>
+          )}
+          <span className="selected-time-range">目前區間：{rangeMeta[range].dates}</span>
+        </section>
         <div className="kpi-grid">
           {kpis.map((kpi) => (
             <article key={kpi.id} className="kpi-card">
@@ -1523,15 +1563,12 @@ function StatsPage({
         <div className="stats-layout">
           <section className="traffic-watch-card">
             <h3>每人每月用量排名</h3>
-            <p>
-              每位使用者皆彙總本月 Token 與提問次數；超過 300,000 Token 的告警送往監控端，本頁不另顯示異常人數 KPI。
-            </p>
+            <p>依每位使用者本月 Token 由高至低排列，並顯示本月提問次數。</p>
             <div className="traffic-table" role="table" aria-label="每人每月用量排名">
               <div className="traffic-row usage-ranking-row traffic-head" role="row">
                 <span>排名</span>
                 <span>使用者</span>
                 <span>本月用量</span>
-                <span>監控狀態</span>
               </div>
               {rankedTraffic.map((item, index) => (
                 <div key={item.id} className="traffic-row usage-ranking-row" role="row">
@@ -1544,13 +1581,6 @@ function StatsPage({
                     <strong>{item.monthlyTokens.toLocaleString()}</strong>
                     <small>{item.monthlyQueries} 次提問</small>
                   </span>
-                  <span>
-                    <em
-                      className={`traffic-status ${item.alertLevel === 'alert' ? 'alert' : 'normal'}`}
-                    >
-                      {item.alertLevel === 'alert' ? '監控端告警' : '未告警'}
-                    </em>
-                  </span>
                 </div>
               ))}
             </div>
@@ -1562,16 +1592,6 @@ function StatsPage({
                 <span className="rank-number">#{index + 1}</span>
                 <strong>{department.department}</strong>
                 <em>{department.queries.toLocaleString()} 次</em>
-              </div>
-            ))}
-          </section>
-          <section>
-            <h3>角色提問次數</h3>
-            {current.roleUsage.map((roleUsage) => (
-              <div key={roleUsage.role} className="error-row">
-                <strong>{roleLabels[roleUsage.role]}</strong>
-                <span>區間內成功提問</span>
-                <em>{roleUsage.queries.toLocaleString()} 次</em>
               </div>
             ))}
           </section>

@@ -1025,6 +1025,55 @@ textarea:disabled {
   display: block;
 }
 
+.stats-time-filter {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(180px, 0.55fr) minmax(220px, 0.7fr);
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid #dce7f6;
+  border-radius: 18px;
+  background: #f8fbff;
+}
+
+.stats-time-filter div > strong,
+.stats-time-filter div > span {
+  display: block;
+}
+
+.stats-time-filter div > span {
+  margin-top: 5px;
+  color: #68758d;
+  font-size: 13px;
+}
+
+.stats-time-filter label {
+  display: grid;
+  gap: 6px;
+  color: #43516b;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.stats-time-filter input,
+.stats-time-filter select {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #cfdbed;
+  border-radius: 12px;
+  background: white;
+  color: #17233c;
+  font: inherit;
+}
+
+.selected-time-range {
+  align-self: center;
+  color: #1769ff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
 .range-switch button small {
   margin-top: 2px;
   font-size: 10px;
@@ -1155,7 +1204,7 @@ textarea:disabled {
 }
 
 .traffic-row.usage-ranking-row {
-  grid-template-columns: 70px minmax(220px, 1.2fr) minmax(150px, 0.75fr) minmax(110px, 0.55fr);
+  grid-template-columns: 70px minmax(220px, 1.2fr) minmax(150px, 0.75fr);
 }
 
 .rank-number {
@@ -1426,6 +1475,7 @@ progress {
   .kpi-grid,
   .system-summary-grid,
   .stats-layout,
+  .stats-time-filter,
   .audit-definition-grid,
   .audit-scope-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1451,6 +1501,7 @@ progress {
   .kpi-grid,
   .system-summary-grid,
   .stats-layout,
+  .stats-time-filter,
   .audit-definition-grid,
   .audit-scope-list,
   .system-value-card {
