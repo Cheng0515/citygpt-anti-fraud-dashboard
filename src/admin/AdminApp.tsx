@@ -1437,31 +1437,36 @@ function StatsPage({
   const padDatePart = (value: number) => String(value).padStart(2, '0')
   const todayValue = `${today.getFullYear()}-${padDatePart(today.getMonth() + 1)}-${padDatePart(today.getDate())}`
   const currentMonthValue = todayValue.slice(0, 7)
-  const [selectedDay, setSelectedDay] = useState(todayValue)
-  const [selectedMonth, setSelectedMonth] = useState(currentMonthValue)
-  const [selectedYear, setSelectedYear] = useState(String(today.getFullYear()))
-  const formatRangeDate = (date: Date) =>
-    new Intl.DateTimeFormat('zh-TW', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(date)
-  const [monthYear, monthNumber] = selectedMonth.split('-').map(Number)
-  const selectedMonthStart = new Date(monthYear, monthNumber - 1, 1)
-  const selectedMonthEnd = new Date(monthYear, monthNumber, 0)
+  const defaultDayStart = new Date(today)
+  defaultDayStart.setDate(defaultDayStart.getDate() - 6)
+  const defaultDayStartValue = `${defaultDayStart.getFullYear()}-${padDatePart(defaultDayStart.getMonth() + 1)}-${padDatePart(defaultDayStart.getDate())}`
+  const [dayStart, setDayStart] = useState(defaultDayStartValue)
+  const [dayEnd, setDayEnd] = useState(todayValue)
+  const [monthStart, setMonthStart] = useState(`${today.getFullYear()}-01`)
+  const [monthEnd, setMonthEnd] = useState(currentMonthValue)
+  const [yearStart, setYearStart] = useState(String(today.getFullYear() - 2))
+  const [yearEnd, setYearEnd] = useState(String(today.getFullYear()))
+  const availableYears = [0, 1, 2, 3, 4].map((offset) => String(today.getFullYear() - offset))
   const rangeMeta: Record<7 | 30 | 90, { label: string; dates: string }> = {
-    7: { label: '日', dates: selectedDay.replaceAll('-', '/') },
+    7: {
+      label: '日',
+      dates: `${dayStart.replaceAll('-', '/')}－${dayEnd.replaceAll('-', '/')}`,
+    },
     30: {
       label: '月',
-      dates: `${formatRangeDate(selectedMonthStart)}－${formatRangeDate(selectedMonthEnd)}`,
+      dates: `${monthStart.replace('-', '/')}－${monthEnd.replace('-', '/')}`,
     },
     90: {
       label: '年',
-      dates: `${selectedYear}/01/01－${selectedYear}/12/31`,
+      dates: `${yearStart}－${yearEnd}`,
     },
   }
-  const rankedTraffic = [...traffic].sort((a, b) => b.monthlyTokens - a.monthlyTokens)
-  const rankedDepartments = [...current.departmentUsage].sort((a, b) => b.queries - a.queries)
+  const rankedTraffic = [...traffic]
+    .sort((a, b) => b.monthlyTokens - a.monthlyTokens)
+    .slice(0, 10)
+  const rankedDepartments = [...current.departmentUsage]
+    .sort((a, b) => b.queries - a.queries)
+    .slice(0, 10)
   const kpis = [
     {
       id: 'totalQueries',
@@ -1505,45 +1510,78 @@ function StatsPage({
       >
         <section className="stats-time-filter" aria-label="選擇統計時間">
           <div>
-            <strong>選擇時間區塊</strong>
-            <span>先選日、月或年，再指定要查看的實際時間。</span>
+            <strong>選擇時間範圍</strong>
+            <span>先選日、月或年，再指定開始與結束時間。</span>
           </div>
           {range === 7 && (
-            <label>
-              選擇日期
-              <input
-                type="date"
-                value={selectedDay}
-                max={todayValue}
-                onChange={(event) => event.target.value && setSelectedDay(event.target.value)}
-              />
-            </label>
+            <>
+              <label>
+                開始日期
+                <input
+                  type="date"
+                  value={dayStart}
+                  max={dayEnd}
+                  onChange={(event) => event.target.value && setDayStart(event.target.value)}
+                />
+              </label>
+              <label>
+                結束日期
+                <input
+                  type="date"
+                  value={dayEnd}
+                  min={dayStart}
+                  max={todayValue}
+                  onChange={(event) => event.target.value && setDayEnd(event.target.value)}
+                />
+              </label>
+            </>
           )}
           {range === 30 && (
-            <label>
-              選擇月份
-              <input
-                type="month"
-                value={selectedMonth}
-                max={currentMonthValue}
-                onChange={(event) => event.target.value && setSelectedMonth(event.target.value)}
-              />
-            </label>
+            <>
+              <label>
+                開始月份
+                <input
+                  type="month"
+                  value={monthStart}
+                  max={monthEnd}
+                  onChange={(event) => event.target.value && setMonthStart(event.target.value)}
+                />
+              </label>
+              <label>
+                結束月份
+                <input
+                  type="month"
+                  value={monthEnd}
+                  min={monthStart}
+                  max={currentMonthValue}
+                  onChange={(event) => event.target.value && setMonthEnd(event.target.value)}
+                />
+              </label>
+            </>
           )}
           {range === 90 && (
-            <label>
-              選擇年度
-              <select value={selectedYear} onChange={(event) => setSelectedYear(event.target.value)}>
-                {[0, 1, 2, 3].map((offset) => {
-                  const year = String(today.getFullYear() - offset)
-                  return (
-                    <option key={year} value={year}>
+            <>
+              <label>
+                開始年度
+                <select value={yearStart} onChange={(event) => setYearStart(event.target.value)}>
+                  {[...availableYears].reverse().map((year) => (
+                    <option key={year} value={year} disabled={year > yearEnd}>
                       {year} 年
                     </option>
-                  )
-                })}
-              </select>
-            </label>
+                  ))}
+                </select>
+              </label>
+              <label>
+                結束年度
+                <select value={yearEnd} onChange={(event) => setYearEnd(event.target.value)}>
+                  {availableYears.map((year) => (
+                    <option key={year} value={year} disabled={year < yearStart}>
+                      {year} 年
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
           )}
           <span className="selected-time-range">目前區間：{rangeMeta[range].dates}</span>
         </section>
@@ -1562,8 +1600,8 @@ function StatsPage({
         </section>
         <div className="stats-layout">
           <section className="traffic-watch-card">
-            <h3>每人每月用量排名</h3>
-            <p>依每位使用者本月 Token 由高至低排列，並顯示本月提問次數。</p>
+            <h3>每人每月用量排名（前 10 名）</h3>
+            <p>依每位使用者本月 Token 由高至低排列，最多顯示 10 名，並附上本月提問次數。</p>
             <div className="traffic-table" role="table" aria-label="每人每月用量排名">
               <div className="traffic-row usage-ranking-row traffic-head" role="row">
                 <span>排名</span>
@@ -1586,7 +1624,7 @@ function StatsPage({
             </div>
           </section>
           <section>
-            <h3>部門提問次數排名</h3>
+            <h3>部門提問次數排名（前 10 名）</h3>
             {rankedDepartments.map((department, index) => (
               <div key={department.department} className="ranking-row">
                 <span className="rank-number">#{index + 1}</span>

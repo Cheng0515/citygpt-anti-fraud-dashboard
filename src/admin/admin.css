@@ -1027,7 +1027,7 @@ textarea:disabled {
 
 .stats-time-filter {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(180px, 0.55fr) minmax(220px, 0.7fr);
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, 0.55fr)) minmax(210px, 0.75fr);
   gap: 14px;
   align-items: end;
   margin-bottom: 16px;
