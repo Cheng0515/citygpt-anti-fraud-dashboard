@@ -388,9 +388,9 @@ export const usageStats: readonly UsageStats[] = deepFreeze([
   {
     rangeDays: 7,
     kpis: {
-      totalQueries: 12480,
-      aiTokens: 18426000,
-      activeUsers: 1842,
+      totalQueries: 2014,
+      aiTokens: 2640000,
+      activeUsers: 332,
       averageResponseMs: 1280,
       satisfactionRate: 0.91,
     },
@@ -410,18 +410,19 @@ export const usageStats: readonly UsageStats[] = deepFreeze([
       { name: '法規研析', count: 1490 },
     ],
     departmentUsage: [
-      { department: '民政處', queries: 2860, tokens: 4120000 },
-      { department: '社會處', queries: 2440, tokens: 3860000 },
-      { department: '1999 服務中心', queries: 3180, tokens: 2980000 },
+      { department: '1999 服務中心', queries: 620, tokens: 762000 },
+      { department: '民政處', queries: 510, tokens: 688000 },
+      { department: '社會處', queries: 460, tokens: 624000 },
+      { department: '資訊處', queries: 230, tokens: 318000 },
     ],
     roleUsage: [
-      { role: 'user', queries: 10890, tokens: 15120000 },
-      { role: 'admin', queries: 1590, tokens: 3306000 },
+      { role: 'user', queries: 1820, tokens: 2294000 },
+      { role: 'admin', queries: 194, tokens: 346000 },
     ],
     citedDocuments: [
-      { name: '1999 話術與轉介原則', citations: 1260 },
-      { name: '社福津貼資格判斷', citations: 1040 },
-      { name: '稽核紀錄保存規範', citations: 680 },
+      { name: '1999 話術與轉介原則', citations: 240 },
+      { name: '社福津貼資格判斷', citations: 198 },
+      { name: '稽核紀錄保存規範', citations: 143 },
     ],
     qualityIssues: [
       { type: '找不到答案', question: '租屋補貼和急難救助能否同時申請？', count: 46 },
@@ -441,11 +442,11 @@ export const usageStats: readonly UsageStats[] = deepFreeze([
   {
     rangeDays: 30,
     kpis: {
-      totalQueries: 51860,
-      aiTokens: 75890000,
-      activeUsers: 5340,
-      averageResponseMs: 1345,
-      satisfactionRate: 0.9,
+      totalQueries: 12480,
+      aiTokens: 18426000,
+      activeUsers: 1842,
+      averageResponseMs: 1280,
+      satisfactionRate: 0.91,
     },
     trends: [
       { date: '2026-06-07', queries: 1490, activeUsers: 268 },
@@ -463,18 +464,18 @@ export const usageStats: readonly UsageStats[] = deepFreeze([
       { name: '法規研析', count: 6420 },
     ],
     departmentUsage: [
-      { department: '民政處', queries: 11480, tokens: 16820000 },
-      { department: '社會處', queries: 10360, tokens: 15100000 },
-      { department: '1999 服務中心', queries: 13210, tokens: 12330000 },
+      { department: '民政處', queries: 2860, tokens: 4120000 },
+      { department: '社會處', queries: 2440, tokens: 3860000 },
+      { department: '1999 服務中心', queries: 3180, tokens: 2980000 },
     ],
     roleUsage: [
-      { role: 'user', queries: 45110, tokens: 62240000 },
-      { role: 'admin', queries: 6750, tokens: 13650000 },
+      { role: 'user', queries: 10890, tokens: 15120000 },
+      { role: 'admin', queries: 1590, tokens: 3306000 },
     ],
     citedDocuments: [
-      { name: '1999 話術與轉介原則', citations: 4420 },
-      { name: '社福津貼資格判斷', citations: 3860 },
-      { name: '民政戶籍補助說明', citations: 2210 },
+      { name: '1999 話術與轉介原則', citations: 1260 },
+      { name: '社福津貼資格判斷', citations: 1040 },
+      { name: '稽核紀錄保存規範', citations: 680 },
     ],
     qualityIssues: [
       { type: '找不到答案', question: '新制長照交通接送補助是否適用跨縣市？', count: 148 },
@@ -494,11 +495,11 @@ export const usageStats: readonly UsageStats[] = deepFreeze([
   {
     rangeDays: 90,
     kpis: {
-      totalQueries: 142730,
-      aiTokens: 208430000,
-      activeUsers: 9815,
-      averageResponseMs: 1410,
-      satisfactionRate: 0.885,
+      totalQueries: 51860,
+      aiTokens: 75890000,
+      activeUsers: 5340,
+      averageResponseMs: 1345,
+      satisfactionRate: 0.9,
     },
     trends: [
       { date: '2026-04-08', queries: 1280, activeUsers: 231 },
@@ -516,18 +517,18 @@ export const usageStats: readonly UsageStats[] = deepFreeze([
       { name: '法規研析', count: 18280 },
     ],
     departmentUsage: [
-      { department: '民政處', queries: 31840, tokens: 46320000 },
-      { department: '社會處', queries: 28610, tokens: 42110000 },
-      { department: '1999 服務中心', queries: 36200, tokens: 33840000 },
+      { department: '民政處', queries: 11480, tokens: 16820000 },
+      { department: '社會處', queries: 10360, tokens: 15100000 },
+      { department: '1999 服務中心', queries: 13210, tokens: 12330000 },
     ],
     roleUsage: [
-      { role: 'user', queries: 124860, tokens: 171200000 },
-      { role: 'admin', queries: 17870, tokens: 37230000 },
+      { role: 'user', queries: 45110, tokens: 62240000 },
+      { role: 'admin', queries: 6750, tokens: 13650000 },
     ],
     citedDocuments: [
-      { name: '1999 話術與轉介原則', citations: 12240 },
-      { name: '社福津貼資格判斷', citations: 10680 },
-      { name: '社會救助申請清單', citations: 8420 },
+      { name: '1999 話術與轉介原則', citations: 4420 },
+      { name: '社福津貼資格判斷', citations: 3860 },
+      { name: '民政戶籍補助說明', citations: 2210 },
     ],
     qualityIssues: [
       { type: '找不到答案', question: '弱勢家庭多項補助的排除條件有哪些？', count: 386 },

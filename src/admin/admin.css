@@ -1020,9 +1020,20 @@ textarea:disabled {
   color: white;
 }
 
+.range-switch button span,
+.range-switch button small {
+  display: block;
+}
+
+.range-switch button small {
+  margin-top: 2px;
+  font-size: 10px;
+  opacity: 0.78;
+}
+
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -1083,6 +1094,31 @@ textarea:disabled {
   letter-spacing: -0.04em;
 }
 
+.kpi-card small {
+  display: block;
+  margin-top: 8px;
+  color: #68758d;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.stats-report-note {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid #f5d792;
+  border-radius: 14px;
+  background: #fffaf0;
+  color: #7a5412;
+}
+
+.stats-report-note span {
+  color: #806a43;
+  font-size: 13px;
+}
+
 .stats-layout {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1116,6 +1152,15 @@ textarea:disabled {
   border-radius: 15px;
   background: white;
   border: 1px solid #e4ecf8;
+}
+
+.traffic-row.usage-ranking-row {
+  grid-template-columns: 70px minmax(220px, 1.2fr) minmax(150px, 0.75fr) minmax(110px, 0.55fr);
+}
+
+.rank-number {
+  color: #1769ff;
+  font-weight: 900;
 }
 
 .traffic-row span {
@@ -1179,6 +1224,23 @@ textarea:disabled {
   gap: 10px;
   align-items: center;
   margin-top: 8px;
+}
+
+.ranking-row {
+  display: grid;
+  grid-template-columns: 54px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fbff;
+}
+
+.ranking-row em {
+  color: #1769ff;
+  font-style: normal;
+  font-weight: 900;
 }
 
 .quality-issue-row {
@@ -1379,7 +1441,8 @@ progress {
   .admin-topbar,
   .admin-panel-header,
   .admin-topbar-actions,
-  .inline-upload {
+  .inline-upload,
+  .stats-report-note {
     align-items: stretch;
     flex-direction: column;
   }

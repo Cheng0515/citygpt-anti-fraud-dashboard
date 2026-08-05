@@ -1433,56 +1433,56 @@ function StatsPage({
 }) {
   const [range, setRange] = useState<7 | 30 | 90>(30)
   const current = stats.find((item) => item.rangeDays === range) ?? stats[0]
-  const rangeLabels: Record<7 | 30 | 90, string> = {
-    7: '日',
-    30: '週',
-    90: '月',
+  const today = new Date()
+  const currentDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const previousDay = new Date(currentDay)
+  previousDay.setDate(previousDay.getDate() - 1)
+  const daysSinceMonday = (currentDay.getDay() + 6) % 7
+  const currentWeekStart = new Date(currentDay)
+  currentWeekStart.setDate(currentWeekStart.getDate() - daysSinceMonday)
+  const previousWeekStart = new Date(currentWeekStart)
+  previousWeekStart.setDate(previousWeekStart.getDate() - 7)
+  const previousWeekEnd = new Date(currentWeekStart)
+  previousWeekEnd.setDate(previousWeekEnd.getDate() - 1)
+  const previousMonthStart = new Date(currentDay.getFullYear(), currentDay.getMonth() - 1, 1)
+  const previousMonthEnd = new Date(currentDay.getFullYear(), currentDay.getMonth(), 0)
+  const formatRangeDate = (date: Date) =>
+    new Intl.DateTimeFormat('zh-TW', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date)
+  const rangeMeta: Record<7 | 30 | 90, { label: string; dates: string }> = {
+    7: { label: '上一日', dates: formatRangeDate(previousDay) },
+    30: {
+      label: '上週',
+      dates: `${formatRangeDate(previousWeekStart)}－${formatRangeDate(previousWeekEnd)}`,
+    },
+    90: {
+      label: '上個月',
+      dates: `${formatRangeDate(previousMonthStart)}－${formatRangeDate(previousMonthEnd)}`,
+    },
   }
-  const anomalousTraffic = traffic
-    .filter((item) => item.alertLevel === 'alert')
-    .sort((a, b) => b.monthlyTokens - a.monthlyTokens)
-  const alertUsers = anomalousTraffic.length
-  const totalMonthlyTokens = traffic.reduce((sum, item) => sum + item.monthlyTokens, 0)
+  const rankedTraffic = [...traffic].sort((a, b) => b.monthlyTokens - a.monthlyTokens)
+  const rankedDepartments = [...current.departmentUsage].sort((a, b) => b.queries - a.queries)
   const kpis = [
     {
       id: 'totalQueries',
       label: '總提問數',
       value: current.kpis.totalQueries.toLocaleString(),
+      description: '區間內成功送達 AI 的使用者提問次數',
     },
     {
       id: 'activeUsers',
-      label: '活躍使用者',
+      label: '使用人數',
       value: current.kpis.activeUsers.toLocaleString(),
-    },
-    {
-      id: 'aiTokens',
-      label: 'AI 使用量',
-      value: current.kpis.aiTokens.toLocaleString(),
+      description: '區間內至少成功送出 1 次提問的去重人數',
     },
     {
       id: 'satisfactionRate',
       label: '正向回饋率',
       value: `${Math.round(current.kpis.satisfactionRate * 100)}%`,
-    },
-    {
-      id: 'negativeFeedback',
-      label: '負向回饋',
-      value: current.negativeFeedback.count.toLocaleString(),
-    },
-    {
-      id: 'monthlyTokens',
-      label: '本月 Token',
-      value: totalMonthlyTokens.toLocaleString(),
-    },
-    {
-      id: 'trafficAlerts',
-      label: '用量異常',
-      value: `${alertUsers} 人`,
-    },
-    {
-      id: 'averageResponseMs',
-      label: '平均回覆時間',
-      value: `${current.kpis.averageResponseMs}ms`,
+      description: '收到評分的回答中，7–10 分所占比例',
     },
   ]
 
@@ -1490,7 +1490,7 @@ function StatsPage({
     <div className="admin-main-column full-width">
       <Panel
         title="使用統計"
-        subtitle={`${rangeLabels[range]}資料範圍，支撐驗收、營運報告與品質追蹤。`}
+        subtitle={`${rangeMeta[range].label}：${rangeMeta[range].dates}，呈現實際完成區間的使用情形。`}
         action={
           <div className="range-switch" aria-label="統計區間">
             {([7, 30, 90] as const).map((days) => (
@@ -1500,7 +1500,8 @@ function StatsPage({
                 className={range === days ? 'active' : ''}
                 onClick={() => setRange(days)}
               >
-                {rangeLabels[days]}
+                <span>{rangeMeta[days].label}</span>
+                <small>{rangeMeta[days].dates}</small>
               </button>
             ))}
           </div>
@@ -1511,66 +1512,71 @@ function StatsPage({
             <article key={kpi.id} className="kpi-card">
               <span>{kpi.label}</span>
               <strong>{kpi.value}</strong>
+              <small>{kpi.description}</small>
             </article>
           ))}
         </div>
+        <section className="stats-report-note">
+          <strong>統計報表需求待縣府確認</strong>
+          <span>本版先提供畫面查閱；是否需要 Excel／CSV 匯出，以及可下載的資料範圍，確認後再納入。</span>
+        </section>
         <div className="stats-layout">
           <section className="traffic-watch-card">
-            <h3>個人月用量異常</h3>
+            <h3>每人每月用量排名</h3>
             <p>
-              只顯示本月超過 300,000 tokens 的使用者；目前 {alertUsers} 人需要由 IT 或 admin 確認。
+              每位使用者皆彙總本月 Token 與提問次數；超過 300,000 Token 的告警送往監控端，本頁不另顯示異常人數 KPI。
             </p>
-            <div className="traffic-table" role="table" aria-label="個人月 Token 異常">
-              <div className="traffic-row traffic-head" role="row">
+            <div className="traffic-table" role="table" aria-label="每人每月用量排名">
+              <div className="traffic-row usage-ranking-row traffic-head" role="row">
+                <span>排名</span>
                 <span>使用者</span>
-                <span>本月 token</span>
-                <span>狀態</span>
-                <span>處理方式</span>
+                <span>本月用量</span>
+                <span>監控狀態</span>
               </div>
-              {anomalousTraffic.map((item) => {
-                const ratio = Math.round((item.monthlyTokens / item.tokenLimit) * 100)
-
-                return (
-                  <div key={item.id} className="traffic-row" role="row">
-                    <span>
-                      <strong>{item.name}</strong>
-                      <small>{item.department} · {item.email}</small>
-                    </span>
-                    <span>
-                      <strong>{item.monthlyTokens.toLocaleString()}</strong>
-                      <small>
-                        {item.monthlyQueries} 次 / 日均 {item.dailyAverageQueries} 次
-                      </small>
-                    </span>
-                    <span>
-                      <em className="traffic-status alert">已通知</em>
-                      <small>{ratio}%</small>
-                    </span>
-                    <span>{item.note}</span>
-                  </div>
-                )
-              })}
+              {rankedTraffic.map((item, index) => (
+                <div key={item.id} className="traffic-row usage-ranking-row" role="row">
+                  <span className="rank-number">#{index + 1}</span>
+                  <span>
+                    <strong>{item.name}</strong>
+                    <small>{item.department} · {item.email}</small>
+                  </span>
+                  <span>
+                    <strong>{item.monthlyTokens.toLocaleString()}</strong>
+                    <small>{item.monthlyQueries} 次提問</small>
+                  </span>
+                  <span>
+                    <em
+                      className={`traffic-status ${item.alertLevel === 'alert' ? 'alert' : 'normal'}`}
+                    >
+                      {item.alertLevel === 'alert' ? '監控端告警' : '未告警'}
+                    </em>
+                  </span>
+                </div>
+              ))}
             </div>
           </section>
           <section>
-            <h3>部門與角色用量</h3>
-            {current.departmentUsage.map((department) => (
-              <div key={department.department} className="error-row">
+            <h3>部門提問次數排名</h3>
+            {rankedDepartments.map((department, index) => (
+              <div key={department.department} className="ranking-row">
+                <span className="rank-number">#{index + 1}</span>
                 <strong>{department.department}</strong>
-                <span>{department.tokens.toLocaleString()} tokens</span>
-                <em>{department.queries.toLocaleString()}</em>
-              </div>
-            ))}
-            {current.roleUsage.map((roleUsage) => (
-              <div key={roleUsage.role} className="error-row">
-                <strong>{roleLabels[roleUsage.role]}</strong>
-                <span>{roleUsage.tokens.toLocaleString()} tokens</span>
-                <em>{roleUsage.queries.toLocaleString()}</em>
+                <em>{department.queries.toLocaleString()} 次</em>
               </div>
             ))}
           </section>
           <section>
-            <h3>常被引用文件</h3>
+            <h3>角色提問次數</h3>
+            {current.roleUsage.map((roleUsage) => (
+              <div key={roleUsage.role} className="error-row">
+                <strong>{roleLabels[roleUsage.role]}</strong>
+                <span>區間內成功提問</span>
+                <em>{roleUsage.queries.toLocaleString()} 次</em>
+              </div>
+            ))}
+          </section>
+          <section>
+            <h3>KMS 引用文件排名</h3>
             {current.citedDocuments.map((document) => (
               <div key={document.name} className="progress-row">
                 <span>{document.name}</span>
@@ -1579,32 +1585,6 @@ function StatsPage({
                   value={document.citations}
                 />
                 <strong>{document.citations.toLocaleString()}</strong>
-              </div>
-            ))}
-          </section>
-          <section>
-            <h3>找不到答案 / 低相關度</h3>
-            {current.qualityIssues.map((issue) => (
-              <div key={`${issue.type}-${issue.question}`} className="quality-issue-row">
-                <strong>{issue.type}</strong>
-                <span>{issue.question}</span>
-                <em>{issue.count}</em>
-              </div>
-            ))}
-          </section>
-          <section>
-            <h3>負向回饋與未解決</h3>
-            <p className="large-number">{Math.round(current.negativeFeedback.rate * 100)}%</p>
-            <div className="error-row">
-              <strong>未解決</strong>
-              <span>負向回饋尚未完成處理</span>
-              <em>{current.negativeFeedback.unresolved.toLocaleString()}</em>
-            </div>
-            {current.negativeFeedback.commonReasons.map((reason) => (
-              <div key={reason.reason} className="error-row">
-                <strong>{reason.reason}</strong>
-                <span>{reason.description}</span>
-                <em>{reason.count}</em>
               </div>
             ))}
           </section>
