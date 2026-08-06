@@ -21,7 +21,7 @@ import {
   UserCog,
   X,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import {
   adminUsers,
@@ -65,7 +65,7 @@ const pageMeta: Record<
   },
   feedback: {
     label: '回饋管理',
-    description: '查看回答評分、留言與處理狀態',
+    description: '查看評分分布、留言與管理者備註',
     icon: <MessageSquare size={18} />,
   },
 }
@@ -117,13 +117,6 @@ const operationTypeLabels = {
   management: '管理操作',
   system: '系統判斷',
 } as const
-
-const feedbackStatusLabels: Record<FeedbackItem['status'], string> = {
-  pending: '待處理',
-  in_progress: '處理中',
-  completed: '已完成',
-  ignored: '不列入',
-}
 
 type KnowledgeAgentStatus = 'draft' | 'published' | 'paused'
 type KnowledgeAgentAccess = 'all' | 'department' | 'selected'
@@ -1480,12 +1473,6 @@ function StatsPage({
       value: current.kpis.activeUsers.toLocaleString(),
       description: '區間內至少成功送出 1 次提問的去重人數',
     },
-    {
-      id: 'satisfactionRate',
-      label: '正向回饋率',
-      value: `${Math.round(current.kpis.satisfactionRate * 100)}%`,
-      description: '收到評分的回答中，7–10 分所占比例',
-    },
   ]
 
   return (
@@ -1664,56 +1651,52 @@ function FeedbackPage({
   setNotice: (message: string) => void
 }) {
   const canManage = can(role, 'feedback.manage')
+  const availableDates = items.map((item) => item.createdAt.slice(0, 10)).sort()
   const [departmentFilter, setDepartmentFilter] = useState('all')
   const [agentFilter, setAgentFilter] = useState('all')
-  const [ratingFilter, setRatingFilter] = useState('all')
-  const [status, setStatus] = useState('all')
+  const [dateStart, setDateStart] = useState(availableDates[0] ?? '')
+  const [dateEnd, setDateEnd] = useState(availableDates.at(-1) ?? '')
   const [selected, setSelected] = useState<FeedbackItem | null>(items[0] ?? null)
-  const [assignee, setAssignee] = useState(selected?.assignee ?? '')
-  const [tag, setTag] = useState('')
-  const [nextStatus, setNextStatus] = useState<FeedbackItem['status']>(
-    selected?.status ?? 'pending',
-  )
   const [note, setNote] = useState(selected?.note ?? '')
-  const averageRating = Math.round(
-    (items.reduce((sum, item) => sum + item.rating, 0) / items.length) * 10,
-  ) / 10
-  const positiveRate = Math.round(
-    (items.filter((item) => item.rating >= 7).length / items.length) * 100,
-  )
   const departments = Array.from(new Set(items.map((item) => item.department)))
   const agents = Array.from(new Set(items.map((item) => item.agentName)))
-  const visible = items.filter(
-    (item) =>
-      (departmentFilter === 'all' || item.department === departmentFilter) &&
-      (agentFilter === 'all' || item.agentName === agentFilter) &&
-      (ratingFilter === 'all' || item.rating === Number(ratingFilter)) &&
-      (status === 'all' || item.status === status),
+  const visible = useMemo(
+    () =>
+      items.filter((item) => {
+        const createdDate = item.createdAt.slice(0, 10)
+        return (
+          (!dateStart || createdDate >= dateStart) &&
+          (!dateEnd || createdDate <= dateEnd) &&
+          (departmentFilter === 'all' || item.department === departmentFilter) &&
+          (agentFilter === 'all' || item.agentName === agentFilter)
+        )
+      }),
+    [agentFilter, dateEnd, dateStart, departmentFilter, items],
   )
+  const positiveCount = visible.filter((item) => item.rating >= 7).length
+  const negativeCount = visible.length - positiveCount
+  const positiveRate = visible.length ? Math.round((positiveCount / visible.length) * 100) : 0
+  const negativeRate = visible.length ? 100 - positiveRate : 0
 
   useEffect(() => {
-    setAssignee(selected?.assignee ?? '')
-    setTag('')
-    setNextStatus(selected?.status ?? 'pending')
     setNote(selected?.note ?? '')
   }, [selected])
 
+  useEffect(() => {
+    if (!selected || !visible.some((item) => item.id === selected.id)) {
+      setSelected(visible[0] ?? null)
+    }
+  }, [selected, visible])
+
   const save = () => {
     if (!selected) return
-    if (nextStatus === 'completed' && !note.trim()) {
-      setNotice('完成回饋前，請先填寫處理說明。')
-      return
-    }
     const next: FeedbackItem = {
       ...selected,
-      assignee: assignee || null,
-      status: nextStatus,
       note,
-      tags: tag ? [...selected.tags, tag] : selected.tags,
     }
     setItems((current) => current.map((item) => (item.id === selected.id ? next : item)))
     setSelected(next)
-    setNotice(`已更新 ${selected.id} 的處理狀態。`)
+    setNotice(`已儲存 ${selected.userName} 這筆回饋的管理者備註。`)
   }
 
   return (
@@ -1722,20 +1705,58 @@ function FeedbackPage({
         {!canManage && <EmptyPermission label="處理回饋" />}
         <Panel
           title="回饋管理"
-          subtitle="管理使用者針對每段 AI 回答提交的 1–10 分評分與文字留言。"
-          action={
-            <div className="feedback-kpi-stack">
-              <div className="mini-kpi">
-                <span>平均評分</span>
-                <strong>{averageRating}/10</strong>
-              </div>
-              <div className={positiveRate >= 70 ? 'mini-kpi' : 'mini-kpi warning'}>
-                <span>正向回饋率目標 70%</span>
-                <strong>{positiveRate}%</strong>
+          subtitle="依時間查看回答評分分布，並閱讀使用者留言。"
+        >
+          <section className="feedback-time-filter" aria-label="選擇回饋時間">
+            <div>
+              <strong>回饋時間區間</strong>
+              <span>圖表與下方回饋清單會一起更新。</span>
+            </div>
+            <label>
+              開始日期
+              <input
+                type="date"
+                value={dateStart}
+                max={dateEnd}
+                onChange={(event) => setDateStart(event.target.value)}
+              />
+            </label>
+            <label>
+              結束日期
+              <input
+                type="date"
+                value={dateEnd}
+                min={dateStart}
+                onChange={(event) => setDateEnd(event.target.value)}
+              />
+            </label>
+          </section>
+          <section className="feedback-overview" aria-label="回饋評分分布">
+            <div
+              className="feedback-donut"
+              role="img"
+              aria-label={`共 ${visible.length} 筆回饋，正向 ${positiveRate}%，負向 ${negativeRate}%`}
+              style={{ '--positive-rate': `${positiveRate}%` } as React.CSSProperties}
+            >
+              <div>
+                <strong>{visible.length}</strong>
+                <span>筆回饋</span>
               </div>
             </div>
-          }
-        >
+            <div className="feedback-breakdown">
+              <article className="positive">
+                <span>正向回饋</span>
+                <strong>{positiveCount} 筆</strong>
+                <em>{positiveRate}%</em>
+              </article>
+              <article className="negative">
+                <span>負向回饋</span>
+                <strong>{negativeCount} 筆</strong>
+                <em>{negativeRate}%</em>
+              </article>
+              <small>7–10 分列為正向；1–6 分列為負向。</small>
+            </div>
+          </section>
           <div className="admin-filters">
             <label>
               部門
@@ -1762,30 +1783,6 @@ function FeedbackPage({
                 ))}
               </select>
             </label>
-            <label>
-              評分
-              <select
-                value={ratingFilter}
-                onChange={(event) => setRatingFilter(event.target.value)}
-              >
-                <option value="all">全部分數</option>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
-                  <option key={score} value={score}>
-                    {score} 分
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              處理狀態
-              <select value={status} onChange={(event) => setStatus(event.target.value)}>
-                <option value="all">全部</option>
-                <option value="pending">待處理</option>
-                <option value="in_progress">處理中</option>
-                <option value="completed">已完成</option>
-                <option value="ignored">不列入</option>
-              </select>
-            </label>
           </div>
           <div className="feedback-list">
             {visible.map((item) => (
@@ -1801,15 +1798,18 @@ function FeedbackPage({
                 <strong>{item.question}</strong>
                 <span className="feedback-comment-preview">「{item.feedbackText || '未填寫留言'}」</span>
                 <small>
-                  {item.userName} · {item.department} · {item.agentName} · {feedbackStatusLabels[item.status]}
+                  {item.userName} · {item.department} · {item.agentName} · {formatDateTime(item.createdAt)}
                 </small>
               </button>
             ))}
+            {!visible.length && (
+              <div className="feedback-empty">此時間區間沒有回饋資料。</div>
+            )}
           </div>
         </Panel>
       </div>
       <aside className="admin-side-card feedback-detail">
-        <h2>回饋內容與處理</h2>
+        <h2>回饋內容與備註</h2>
         {selected && (
           <>
             <div className="feedback-context-grid">
@@ -1851,56 +1851,19 @@ function FeedbackPage({
               ))}
             </div>
             <label>
-              負責小組
-              <select
-                value={assignee}
-                disabled={!canManage}
-                onChange={(event) => setAssignee(event.target.value)}
-              >
-                <option value="">尚未指派</option>
-                <option value="knowledge-team">知識維護小組</option>
-                <option value="service-team">客服營運小組</option>
-                <option value="security-team">資安稽核小組</option>
-              </select>
-            </label>
-            <label>
-              新增標籤
-              <input
-                value={tag}
-                disabled={!canManage}
-                onChange={(event) => setTag(event.target.value)}
-                placeholder="例如：需補文件"
-              />
-            </label>
-            <label>
-              處理狀態
-              <select
-                value={nextStatus}
-                disabled={!canManage}
-                onChange={(event) =>
-                  setNextStatus(event.target.value as FeedbackItem['status'])
-                }
-              >
-                <option value="pending">待處理</option>
-                <option value="in_progress">處理中</option>
-                <option value="completed">已完成</option>
-                <option value="ignored">不列入</option>
-              </select>
-            </label>
-            <label>
-              處理說明
+              管理者備註
               <textarea
                 rows={4}
                 maxLength={200}
                 value={note}
                 disabled={!canManage}
                 onChange={(event) => setNote(event.target.value)}
-                placeholder="完成時請填寫更新了哪些知識或為何不列入。"
+                placeholder="記錄需要補充的知識、回答問題或後續確認事項。"
               />
               <small>管理者處理備註上限 200 字，目前 {note.length}/200。</small>
             </label>
             <button type="button" className="admin-primary full" disabled={!canManage} onClick={save}>
-              儲存處理結果
+              儲存管理者備註
             </button>
             <dl className="admin-detail-list">
               <div>
@@ -1922,6 +1885,7 @@ function FeedbackPage({
             </dl>
           </>
         )}
+        {!selected && <p className="feedback-empty">請調整時間區間以查看回饋。</p>}
       </aside>
     </div>
   )
@@ -1936,7 +1900,7 @@ export default function AdminApp({ onExit }: { onExit?: () => void }) {
     knowledgeAgentSamples.map((agent) => ({ ...agent, allowedGroups: [...agent.allowedGroups] })),
   )
   const [feedback, setFeedback] = useState<FeedbackItem[]>(() =>
-    feedbackItems.map((item) => ({ ...item, tags: [...item.tags] })),
+    feedbackItems.map((item) => ({ ...item })),
   )
   const pages = allowedPages(role)
 
@@ -2032,7 +1996,7 @@ export default function AdminApp({ onExit }: { onExit?: () => void }) {
           <Filter size={16} />
           這版 prototype 只模擬操作，不連真實 API；所有異動都留在瀏覽器本機狀態。
           <ClipboardList size={16} />
-          驗收重點：SSO 權限、日週月統計、180 天稽核與回饋品質。
+          驗收重點：SSO 權限、日月年統計、180 天稽核與回饋品質。
           <FileSearch size={16} />
           所有工程細節都收在後面，不出現在主要操作路徑。
         </footer>

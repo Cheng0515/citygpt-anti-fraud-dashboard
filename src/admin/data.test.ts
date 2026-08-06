@@ -174,10 +174,10 @@ describe('admin sample data', () => {
     expect(watchUser?.monthlyTokens).toBeLessThan(watchUser?.tokenLimit ?? 0)
   })
 
-  it('includes actionable feedback states and supporting context', () => {
+  it('includes scored feedback and supporting answer context', () => {
     expect(feedbackItems.length).toBeGreaterThanOrEqual(6)
     expect(feedbackItems).toContainEqual(
-      expect.objectContaining({ sentiment: 'negative', status: 'pending' }),
+      expect.objectContaining({ rating: 3 }),
     )
     expect(feedbackItems.every((item) => item.rating >= 1 && item.rating <= 10)).toBe(true)
     expect(

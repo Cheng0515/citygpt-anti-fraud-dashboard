@@ -162,16 +162,12 @@ export interface FeedbackItem {
   readonly userEmail: string
   readonly department: string
   readonly agentName: string
-  readonly sentiment: 'positive' | 'negative'
   readonly rating: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
   readonly question: string
   readonly answer: string
   readonly feedbackText: string
   readonly knowledgeBase: string
-  readonly tags: readonly string[]
-  readonly status: 'pending' | 'in_progress' | 'completed' | 'ignored'
   readonly createdAt: string
-  readonly assignee: string | null
   readonly note: string
   readonly citations: readonly FeedbackCitation[]
   readonly context: FeedbackContext

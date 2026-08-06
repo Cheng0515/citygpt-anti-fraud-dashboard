@@ -75,12 +75,19 @@ describe('CityGPT admin demo', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /回饋管理/ }))
 
-    expect(screen.getByText('平均評分')).toBeInTheDocument()
-    expect(screen.getByText('正向回饋率目標 70%')).toBeInTheDocument()
+    expect(screen.getByLabelText('開始日期')).toBeInTheDocument()
+    expect(screen.getByLabelText('結束日期')).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: '共 6 筆回饋，正向 50%，負向 50%' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('正向回饋')).toBeInTheDocument()
+    expect(screen.getByText('負向回饋')).toBeInTheDocument()
+    expect(screen.getAllByText('3 筆')).toHaveLength(2)
+    expect(screen.getAllByText('50%')).toHaveLength(2)
+    expect(screen.getByText('7–10 分列為正向；1–6 分列為負向。')).toBeInTheDocument()
     expect(screen.getAllByText('3/10').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByLabelText('部門')).toBeInTheDocument()
     expect(screen.getByLabelText('代理人')).toBeInTheDocument()
-    expect(screen.getByLabelText('評分')).toBeInTheDocument()
     expect(screen.getAllByText('王小明').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('民政處').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('民政服務代理人').length).toBeGreaterThanOrEqual(1)
@@ -91,7 +98,17 @@ describe('CityGPT admin demo', () => {
       screen.getByText('只回答一種補助，沒有說明可以一起申請的限制。'),
     ).toBeInTheDocument()
     expect(screen.queryByLabelText('回饋評分')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('處理狀態')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('負責小組')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('新增標籤')).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/管理者備註/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '儲存管理者備註' })).toBeInTheDocument()
     expect(screen.getByText(/管理者處理備註上限 200 字/)).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('結束日期'), { target: { value: '2026-07-04' } })
+    expect(
+      screen.getByRole('img', { name: '共 3 筆回饋，正向 67%，負向 33%' }),
+    ).toBeInTheDocument()
   })
 
   it('shows token usage anomaly rules in audit logs', () => {
@@ -149,6 +166,7 @@ describe('CityGPT admin demo', () => {
     expect(screen.queryByText('用量異常')).not.toBeInTheDocument()
     expect(screen.queryByText('找不到答案 / 低相關度')).not.toBeInTheDocument()
     expect(screen.queryByText('負向回饋與未解決')).not.toBeInTheDocument()
+    expect(screen.queryByText('正向回饋率')).not.toBeInTheDocument()
     expect(screen.queryByText('角色提問次數')).not.toBeInTheDocument()
     expect(screen.queryByText('監控狀態')).not.toBeInTheDocument()
     expect(screen.queryByText('監控端告警')).not.toBeInTheDocument()

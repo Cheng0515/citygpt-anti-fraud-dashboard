@@ -1324,9 +1324,143 @@ progress {
   color: #be123c;
 }
 
+.feedback-time-filter {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, 190px));
+  gap: 12px;
+  align-items: end;
+  padding: 14px;
+  margin-bottom: 14px;
+  border: 1px solid #dce7f6;
+  border-radius: 18px;
+  background: #f8fbff;
+}
+
+.feedback-time-filter > div {
+  align-self: center;
+}
+
+.feedback-time-filter strong,
+.feedback-time-filter span {
+  display: block;
+}
+
+.feedback-time-filter span {
+  margin-top: 4px;
+  color: #68758d;
+  font-size: 12px;
+}
+
+.feedback-overview {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+  margin-bottom: 14px;
+  border: 1px solid #e4ecf8;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.feedback-donut {
+  width: 132px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(#16a36a 0 var(--positive-rate), #f05f70 var(--positive-rate) 100%);
+}
+
+.feedback-donut::before {
+  content: '';
+  grid-area: 1 / 1;
+  width: 88px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #eef3fa;
+}
+
+.feedback-donut > div {
+  z-index: 1;
+  grid-area: 1 / 1;
+  text-align: center;
+}
+
+.feedback-donut strong,
+.feedback-donut span {
+  display: block;
+}
+
+.feedback-donut strong {
+  font-size: 28px;
+}
+
+.feedback-donut span {
+  color: #68758d;
+  font-size: 12px;
+}
+
+.feedback-breakdown {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.feedback-breakdown article {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 14px 48px 14px 16px;
+  border-radius: 16px;
+}
+
+.feedback-breakdown article.positive {
+  background: #ecfdf5;
+  color: #087443;
+}
+
+.feedback-breakdown article.negative {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.feedback-breakdown article span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.feedback-breakdown article strong {
+  font-size: 22px;
+}
+
+.feedback-breakdown article em {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.feedback-breakdown > small {
+  grid-column: 1 / -1;
+  color: #68758d;
+}
+
 .feedback-list {
   display: grid;
   gap: 10px;
+}
+
+.feedback-empty {
+  padding: 24px;
+  border: 1px dashed #ced9ea;
+  border-radius: 16px;
+  color: #68758d;
+  text-align: center;
 }
 
 .feedback-card {
@@ -1553,6 +1687,7 @@ progress {
   .system-summary-grid,
   .stats-layout,
   .stats-time-filter,
+  .feedback-time-filter,
   .audit-definition-grid,
   .audit-scope-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1579,6 +1714,7 @@ progress {
   .system-summary-grid,
   .stats-layout,
   .stats-time-filter,
+  .feedback-time-filter,
   .audit-definition-grid,
   .audit-scope-list,
   .system-value-card {
@@ -1603,11 +1739,17 @@ progress {
 
   .agent-summary-grid,
   .feedback-context-grid,
+  .feedback-overview,
+  .feedback-breakdown,
   .traffic-row,
   .quality-issue-row,
   .progress-row,
   .error-row,
   .admin-detail-list div {
     grid-template-columns: 1fr;
+  }
+
+  .feedback-donut {
+    margin-inline: auto;
   }
 }
