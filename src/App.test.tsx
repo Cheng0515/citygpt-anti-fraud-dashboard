@@ -87,7 +87,7 @@ describe('CityGPT admin demo', () => {
     expect(screen.getByText('7–10 分列為正向；1–6 分列為負向。')).toBeInTheDocument()
     expect(screen.getAllByText('3/10').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByLabelText('部門')).toBeInTheDocument()
-    expect(screen.getByLabelText('代理人')).toBeInTheDocument()
+    expect(screen.queryByLabelText('代理人')).not.toBeInTheDocument()
     expect(screen.getAllByText('王小明').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('民政處').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('民政服務代理人').length).toBeGreaterThanOrEqual(1)

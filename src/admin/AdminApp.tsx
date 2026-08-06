@@ -1653,13 +1653,11 @@ function FeedbackPage({
   const canManage = can(role, 'feedback.manage')
   const availableDates = items.map((item) => item.createdAt.slice(0, 10)).sort()
   const [departmentFilter, setDepartmentFilter] = useState('all')
-  const [agentFilter, setAgentFilter] = useState('all')
   const [dateStart, setDateStart] = useState(availableDates[0] ?? '')
   const [dateEnd, setDateEnd] = useState(availableDates.at(-1) ?? '')
   const [selected, setSelected] = useState<FeedbackItem | null>(items[0] ?? null)
   const [note, setNote] = useState(selected?.note ?? '')
   const departments = Array.from(new Set(items.map((item) => item.department)))
-  const agents = Array.from(new Set(items.map((item) => item.agentName)))
   const visible = useMemo(
     () =>
       items.filter((item) => {
@@ -1667,11 +1665,10 @@ function FeedbackPage({
         return (
           (!dateStart || createdDate >= dateStart) &&
           (!dateEnd || createdDate <= dateEnd) &&
-          (departmentFilter === 'all' || item.department === departmentFilter) &&
-          (agentFilter === 'all' || item.agentName === agentFilter)
+          (departmentFilter === 'all' || item.department === departmentFilter)
         )
       }),
-    [agentFilter, dateEnd, dateStart, departmentFilter, items],
+    [dateEnd, dateStart, departmentFilter, items],
   )
   const positiveCount = visible.filter((item) => item.rating >= 7).length
   const negativeCount = visible.length - positiveCount
@@ -1768,17 +1765,6 @@ function FeedbackPage({
                 {departments.map((department) => (
                   <option key={department} value={department}>
                     {department}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              代理人
-              <select value={agentFilter} onChange={(event) => setAgentFilter(event.target.value)}>
-                <option value="all">全部代理人</option>
-                {agents.map((agent) => (
-                  <option key={agent} value={agent}>
-                    {agent}
                   </option>
                 ))}
               </select>
