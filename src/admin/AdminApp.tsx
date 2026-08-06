@@ -65,7 +65,7 @@ const pageMeta: Record<
   },
   feedback: {
     label: '回饋管理',
-    description: '處理正負回饋與改善任務',
+    description: '查看回答評分、留言與處理狀態',
     icon: <MessageSquare size={18} />,
   },
 }
@@ -1664,7 +1664,9 @@ function FeedbackPage({
   setNotice: (message: string) => void
 }) {
   const canManage = can(role, 'feedback.manage')
-  const [sentiment, setSentiment] = useState('all')
+  const [departmentFilter, setDepartmentFilter] = useState('all')
+  const [agentFilter, setAgentFilter] = useState('all')
+  const [ratingFilter, setRatingFilter] = useState('all')
   const [status, setStatus] = useState('all')
   const [selected, setSelected] = useState<FeedbackItem | null>(items[0] ?? null)
   const [assignee, setAssignee] = useState(selected?.assignee ?? '')
@@ -1673,16 +1675,19 @@ function FeedbackPage({
     selected?.status ?? 'pending',
   )
   const [note, setNote] = useState(selected?.note ?? '')
-  const [rating, setRating] = useState<FeedbackItem['rating']>(selected?.rating ?? 5)
   const averageRating = Math.round(
     (items.reduce((sum, item) => sum + item.rating, 0) / items.length) * 10,
   ) / 10
   const positiveRate = Math.round(
     (items.filter((item) => item.rating >= 7).length / items.length) * 100,
   )
+  const departments = Array.from(new Set(items.map((item) => item.department)))
+  const agents = Array.from(new Set(items.map((item) => item.agentName)))
   const visible = items.filter(
     (item) =>
-      (sentiment === 'all' || item.sentiment === sentiment) &&
+      (departmentFilter === 'all' || item.department === departmentFilter) &&
+      (agentFilter === 'all' || item.agentName === agentFilter) &&
+      (ratingFilter === 'all' || item.rating === Number(ratingFilter)) &&
       (status === 'all' || item.status === status),
   )
 
@@ -1691,7 +1696,6 @@ function FeedbackPage({
     setTag('')
     setNextStatus(selected?.status ?? 'pending')
     setNote(selected?.note ?? '')
-    setRating(selected?.rating ?? 5)
   }, [selected])
 
   const save = () => {
@@ -1702,8 +1706,6 @@ function FeedbackPage({
     }
     const next: FeedbackItem = {
       ...selected,
-      rating,
-      sentiment: rating >= 7 ? 'positive' : 'negative',
       assignee: assignee || null,
       status: nextStatus,
       note,
@@ -1720,7 +1722,7 @@ function FeedbackPage({
         {!canManage && <EmptyPermission label="處理回饋" />}
         <Panel
           title="回饋管理"
-          subtitle="把正負回饋轉成可追蹤的知識庫改善任務。"
+          subtitle="管理使用者針對每段 AI 回答提交的 1–10 分評分與文字留言。"
           action={
             <div className="feedback-kpi-stack">
               <div className="mini-kpi">
@@ -1736,11 +1738,42 @@ function FeedbackPage({
         >
           <div className="admin-filters">
             <label>
-              回饋類型
-              <select value={sentiment} onChange={(event) => setSentiment(event.target.value)}>
-                <option value="all">全部</option>
-                <option value="positive">正向</option>
-                <option value="negative">負向</option>
+              部門
+              <select
+                value={departmentFilter}
+                onChange={(event) => setDepartmentFilter(event.target.value)}
+              >
+                <option value="all">全部部門</option>
+                {departments.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              代理人
+              <select value={agentFilter} onChange={(event) => setAgentFilter(event.target.value)}>
+                <option value="all">全部代理人</option>
+                {agents.map((agent) => (
+                  <option key={agent} value={agent}>
+                    {agent}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              評分
+              <select
+                value={ratingFilter}
+                onChange={(event) => setRatingFilter(event.target.value)}
+              >
+                <option value="all">全部分數</option>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
+                  <option key={score} value={score}>
+                    {score} 分
+                  </option>
+                ))}
               </select>
             </label>
             <label>
@@ -1762,12 +1795,13 @@ function FeedbackPage({
                 className={selected?.id === item.id ? 'feedback-card active' : 'feedback-card'}
                 onClick={() => setSelected(item)}
               >
-                <span className={`admin-pill ${item.sentiment}`}>
-                  {item.sentiment === 'positive' ? '正向' : '負向'}
+                <span className={`feedback-score ${item.rating >= 7 ? 'positive' : 'negative'}`}>
+                  {item.rating}/10
                 </span>
                 <strong>{item.question}</strong>
+                <span className="feedback-comment-preview">「{item.feedbackText || '未填寫留言'}」</span>
                 <small>
-                  評分 {item.rating}/10 · {item.knowledgeBase} · {feedbackStatusLabels[item.status]}
+                  {item.userName} · {item.department} · {item.agentName} · {feedbackStatusLabels[item.status]}
                 </small>
               </button>
             ))}
@@ -1775,13 +1809,39 @@ function FeedbackPage({
         </Panel>
       </div>
       <aside className="admin-side-card feedback-detail">
-        <h2>處理回饋</h2>
+        <h2>回饋內容與處理</h2>
         {selected && (
           <>
-            <p>{selected.question}</p>
+            <div className="feedback-context-grid">
+              <div>
+                <span>使用者</span>
+                <strong>{selected.userName}</strong>
+                <small>{selected.userEmail}</small>
+              </div>
+              <div>
+                <span>部門</span>
+                <strong>{selected.department}</strong>
+              </div>
+              <div>
+                <span>代理人</span>
+                <strong>{selected.agentName}</strong>
+              </div>
+              <div>
+                <span>使用者評分</span>
+                <strong>{selected.rating}/10</strong>
+              </div>
+            </div>
+            <div className="feedback-question">
+              <strong>使用者問題</strong>
+              <span>{selected.question}</span>
+            </div>
             <div className="quoted-answer">
-              <strong>系統回答</strong>
+              <strong>被評分的回答段落</strong>
               <span>{selected.answer}</span>
+            </div>
+            <div className="user-feedback-copy">
+              <strong>使用者留言</strong>
+              <span>{selected.feedbackText || '使用者未留下文字留言。'}</span>
             </div>
             <div className="citation-list">
               {selected.citations.map((citation) => (
@@ -1790,22 +1850,6 @@ function FeedbackPage({
                 </span>
               ))}
             </div>
-            <label>
-              回饋評分
-              <select
-                value={rating}
-                disabled={!canManage}
-                onChange={(event) =>
-                  setRating(Number(event.target.value) as FeedbackItem['rating'])
-                }
-              >
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
-                  <option key={score} value={score}>
-                    {score} 分
-                  </option>
-                ))}
-              </select>
-            </label>
             <label>
               負責小組
               <select
@@ -1853,7 +1897,7 @@ function FeedbackPage({
                 onChange={(event) => setNote(event.target.value)}
                 placeholder="完成時請填寫更新了哪些知識或為何不列入。"
               />
-              <small>文字意見上限 200 字，目前 {note.length}/200。</small>
+              <small>管理者處理備註上限 200 字，目前 {note.length}/200。</small>
             </label>
             <button type="button" className="admin-primary full" disabled={!canManage} onClick={save}>
               儲存處理結果
@@ -1866,6 +1910,14 @@ function FeedbackPage({
               <div>
                 <dt>來源</dt>
                 <dd>{selected.context.channel}</dd>
+              </div>
+              <div>
+                <dt>回饋時間</dt>
+                <dd>{formatDateTime(selected.createdAt)}</dd>
+              </div>
+              <div>
+                <dt>對話 ID</dt>
+                <dd>{selected.context.conversationId}</dd>
               </div>
             </dl>
           </>

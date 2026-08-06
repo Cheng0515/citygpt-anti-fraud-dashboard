@@ -157,10 +157,16 @@ export interface FeedbackContext {
 
 export interface FeedbackItem {
   readonly id: string
+  readonly userId: string
+  readonly userName: string
+  readonly userEmail: string
+  readonly department: string
+  readonly agentName: string
   readonly sentiment: 'positive' | 'negative'
   readonly rating: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
   readonly question: string
   readonly answer: string
+  readonly feedbackText: string
   readonly knowledgeBase: string
   readonly tags: readonly string[]
   readonly status: 'pending' | 'in_progress' | 'completed' | 'ignored'

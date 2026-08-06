@@ -70,16 +70,28 @@ describe('CityGPT admin demo', () => {
     expect(screen.queryByText('林怡君')).not.toBeInTheDocument()
   })
 
-  it('shows feedback rating as a 1 to 10 score', () => {
+  it('shows user feedback against a specific agent answer segment', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: /回饋管理/ }))
 
     expect(screen.getByText('平均評分')).toBeInTheDocument()
     expect(screen.getByText('正向回饋率目標 70%')).toBeInTheDocument()
-    expect(screen.getByText(/評分 3\/10/)).toBeInTheDocument()
-    expect(screen.getByLabelText('回饋評分')).toBeInTheDocument()
-    expect(screen.getByText(/文字意見上限 200 字/)).toBeInTheDocument()
+    expect(screen.getAllByText('3/10').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByLabelText('部門')).toBeInTheDocument()
+    expect(screen.getByLabelText('代理人')).toBeInTheDocument()
+    expect(screen.getByLabelText('評分')).toBeInTheDocument()
+    expect(screen.getAllByText('王小明').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('民政處').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('民政服務代理人').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('使用者問題')).toBeInTheDocument()
+    expect(screen.getByText('被評分的回答段落')).toBeInTheDocument()
+    expect(screen.getByText('使用者留言')).toBeInTheDocument()
+    expect(
+      screen.getByText('只回答一種補助，沒有說明可以一起申請的限制。'),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('回饋評分')).not.toBeInTheDocument()
+    expect(screen.getByText(/管理者處理備註上限 200 字/)).toBeInTheDocument()
   })
 
   it('shows token usage anomaly rules in audit logs', () => {

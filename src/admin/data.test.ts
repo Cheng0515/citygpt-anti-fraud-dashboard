@@ -182,6 +182,17 @@ describe('admin sample data', () => {
     expect(feedbackItems.every((item) => item.rating >= 1 && item.rating <= 10)).toBe(true)
     expect(
       feedbackItems.every(
+        (item) =>
+          item.userId &&
+          item.userName &&
+          item.userEmail &&
+          item.department &&
+          item.agentName &&
+          item.feedbackText,
+      ),
+    ).toBe(true)
+    expect(
+      feedbackItems.every(
         (item) => item.context.traceId && item.citations.length > 0,
       ),
     ).toBe(true)

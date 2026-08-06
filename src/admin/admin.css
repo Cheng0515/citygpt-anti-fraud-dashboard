@@ -1344,6 +1344,83 @@ progress {
   background: #eaf2ff;
 }
 
+.feedback-score {
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.feedback-score.positive {
+  background: #ecfdf5;
+  color: #087443;
+}
+
+.feedback-score.negative {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.feedback-comment-preview {
+  color: #52627b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.feedback-context-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.feedback-context-grid div {
+  padding: 11px 12px;
+  border: 1px solid #e4ecf8;
+  border-radius: 14px;
+  background: #f8fbff;
+}
+
+.feedback-context-grid span,
+.feedback-context-grid strong,
+.feedback-context-grid small {
+  display: block;
+}
+
+.feedback-context-grid span,
+.feedback-context-grid small {
+  color: #68758d;
+  font-size: 11px;
+}
+
+.feedback-context-grid strong {
+  margin-top: 4px;
+}
+
+.feedback-context-grid small {
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+
+.feedback-question,
+.user-feedback-copy {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.feedback-question {
+  border: 1px solid #dce7f6;
+  background: #f8fbff;
+}
+
+.user-feedback-copy {
+  border: 1px solid #f5d792;
+  background: #fffaf0;
+  color: #71501b;
+}
+
 .mini-kpi {
   padding: 10px 13px;
   background: #ecfdf5;
@@ -1525,6 +1602,7 @@ progress {
   }
 
   .agent-summary-grid,
+  .feedback-context-grid,
   .traffic-row,
   .quality-issue-row,
   .progress-row,
