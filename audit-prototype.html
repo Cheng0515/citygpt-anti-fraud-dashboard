@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#236cf2" />
+<title>AI 知識代理人管理後臺 Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#1769ff; --blue-d:#0f5fed; --blue-soft:#f1f6ff; --blue-line:#d8e2f3;
+  --ink:#17233c; --muted:#68758d; --muted-2:#8a96aa;
+  --surface:#fff; --surface-2:#f7faff;
+  --line:#dfe7f4; --line-soft:#ecf1f9;
+  --amber:#b8791b; --amber-soft:#fdf3e0;
+  --red:#d1453b; --red-soft:#fdeceb; --crit:#96201a;
+  --green:#1f8a5f; --green-soft:#e6f5ee;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --sans:"Noto Sans TC","Helvetica Neue",Arial,sans-serif;
+  --r:18px; --r2:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--sans); color:var(--ink); font-size:14px; line-height:1.65;
+  background:radial-gradient(circle at top left,rgba(35,108,255,.14),transparent 34rem),
+             linear-gradient(135deg,#f7faff,#edf4ff 42%,#f8fbff);
+  background-attachment:fixed; -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;background:rgba(255,255,255,.94);border-right:1px solid var(--blue-line);
+  box-shadow:12px 0 34px rgba(32,73,132,.06);backdrop-filter:blur(16px);display:flex;flex-direction:column}
+.brand{padding:20px 16px 16px}
+.brand .mark{display:flex;gap:11px;align-items:center}
+.brand .mark span{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;flex:0 0 auto;
+  background:linear-gradient(135deg,#1769ff,#42a5ff);color:#fff;font-weight:900;font-size:15px;box-shadow:0 10px 20px rgba(23,105,255,.28)}
+.brand h1{margin:0;font-size:15px;font-weight:900;letter-spacing:-.01em}
+.brand p{margin:1px 0 0;font-size:11px;color:var(--muted-2);font-family:var(--mono)}
+.nav{padding:8px 10px;flex:1;overflow-y:auto}
+.nav-group{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--muted-2);padding:12px 8px 6px;text-transform:uppercase}
+.nav button{display:flex;width:100%;gap:10px;align-items:baseline;background:none;border:1px solid transparent;
+  color:#263b5c;padding:9px 11px;text-align:left;border-radius:var(--r2);font-size:13.5px;margin-bottom:3px}
+.nav button .n{font-family:var(--mono);font-size:10px;color:var(--muted-2)}
+.nav button:hover{background:#f6f9ff}
+.nav button.on{background:var(--blue-soft);color:var(--blue-d);border-color:rgba(15,95,237,.18);font-weight:700}
+.nav button.on .n{color:var(--blue-d)}
+.side-foot{padding:14px 18px 18px;border-top:1px solid var(--line-soft);font-family:var(--mono);font-size:10.5px;color:var(--muted-2);line-height:1.8}
+.side-foot b{color:var(--muted);font-weight:500}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{background:rgba(255,255,255,.92);border-bottom:1px solid var(--blue-line);padding:11px 24px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;backdrop-filter:blur(12px)}
+.env{display:flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.env .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.env .sep{color:var(--blue-line)}
+.spacer{flex:1}
+.persp-label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted-2);text-transform:uppercase}
+.persp{display:flex;border:1px solid var(--blue-line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.persp button{background:none;border:0;padding:6px 14px;font-size:12.5px;font-weight:700;color:var(--muted);display:flex;gap:6px;align-items:baseline}
+.persp button .k{font-family:var(--mono);font-size:10px}
+.persp button.on{background:var(--blue);color:#fff}
+.persp button.on .k{color:rgba(255,255,255,.75)}
+
+.wrap{padding:28px 32px 72px;max-width:1440px;width:100%;margin:0 auto}
+.page-head{margin-bottom:18px}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--blue);text-transform:uppercase;font-weight:600}
+.page-head h2{margin:5px 0 4px;font-size:28px;font-weight:900;letter-spacing:-.03em}
+.page-head p{margin:0;color:var(--muted);max-width:80ch}
+
+.card{background:rgba(255,255,255,.96);border:1px solid rgba(184,204,235,.72);border-radius:var(--r);box-shadow:0 14px 38px rgba(42,78,130,.07),0 2px 8px rgba(42,78,130,.035);overflow:hidden}
+.card-h{padding:13px 16px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.card-h h3{margin:0;font-size:14.5px;font-weight:700}
+.card-h .sub{font-size:12px;color:var(--muted)}
+.card-b{padding:16px}
+
+.sev{display:inline-flex;align-items:flex-end;gap:1.5px;height:13px}
+.sev i{width:3px;background:var(--line);border-radius:.5px;display:block}
+.sev i:nth-child(1){height:4px}.sev i:nth-child(2){height:7px}
+.sev i:nth-child(3){height:10px}.sev i:nth-child(4){height:13px}
+.sev[data-s="INFO"] i:nth-child(-n+1){background:var(--muted-2)}
+.sev[data-s="WARNING"] i:nth-child(-n+2){background:var(--amber)}
+.sev[data-s="ERROR"] i:nth-child(-n+3){background:var(--red)}
+.sev[data-s="CRITICAL"] i{background:var(--crit)}
+.sev-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:600}
+.sev-tag[data-s="INFO"]{color:var(--muted)}
+.sev-tag[data-s="WARNING"]{color:var(--amber)}
+.sev-tag[data-s="ERROR"]{color:var(--red)}
+.sev-tag[data-s="CRITICAL"]{color:var(--crit)}
+
+.code{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--surface-2);border:1px solid var(--blue-line);white-space:nowrap;display:inline-block}
+.code.err{background:var(--red-soft);border-color:#f3ccc9;color:#a5322a}
+.code.ok{background:var(--green-soft);border-color:#c9e6d8;color:var(--green)}
+.pill{display:inline-block;font-size:11.5px;padding:1px 10px;border-radius:999px;border:1px solid var(--blue-line);background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.ok{background:var(--green-soft);border-color:#c9e6d8;color:var(--green)}
+.pill.warn{background:var(--amber-soft);border-color:#eddcbc;color:var(--amber)}
+.pill.bad{background:var(--red-soft);border-color:#f3ccc9;color:#a5322a}
+.pill.blue{background:var(--blue-soft);border-color:#cfe0fb;color:var(--blue-d)}
+
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end}
+.f label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.f select,.f input{width:100%;padding:8px 10px;border:1px solid var(--blue-line);border-radius:var(--r2);background:var(--surface);font-size:13px}
+.chiprow{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.chip{border:1px solid var(--blue-line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:12px;display:inline-flex;gap:7px;align-items:center;color:var(--muted)}
+.chip.on{border-color:var(--blue);background:var(--blue);color:#fff}
+.chip.on .sev i{background:rgba(255,255,255,.4)}
+.chip.on .sev[data-s="INFO"] i:nth-child(-n+1),.chip.on .sev[data-s="WARNING"] i:nth-child(-n+2),
+.chip.on .sev[data-s="ERROR"] i:nth-child(-n+3),.chip.on .sev[data-s="CRITICAL"] i{background:#fff}
+.btn{border:1px solid var(--blue);background:var(--blue);color:#fff;padding:8px 16px;border-radius:var(--r2);font-size:13px;font-weight:700}
+.btn.ghost{background:var(--surface);color:var(--blue-d)}
+.btn.small{padding:4px 11px;font-size:12px;border-radius:999px}
+
+.scroll{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;min-width:820px}
+.tbl thead th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--muted);
+  text-transform:uppercase;font-weight:600;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+.tbl tbody td{padding:12px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.tbl tbody tr[data-id]{cursor:pointer}
+.tbl tbody tr[data-id]:hover{background:#fafcff}
+.tbl tbody tr.sel{background:var(--blue-soft)}
+.tbl td .m{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.tbl td .t{font-weight:700}
+.tbl .num{font-family:var(--mono);font-size:12px;text-align:right;white-space:nowrap}
+.tags{margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+.detail{margin-top:16px;border:1px solid var(--blue);border-radius:var(--r);background:var(--surface);overflow:hidden;box-shadow:0 10px 28px rgba(23,105,255,.12)}
+.detail-h{background:linear-gradient(135deg,#1769ff,#3d8bff);color:#fff;padding:13px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.detail-h h3{margin:0;font-size:15px;font-weight:700}
+.detail-h .m{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.8)}
+.detail-h .act{font-family:var(--mono);font-size:11.5px;font-weight:600;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);padding:3px 10px;border-radius:999px}
+.tracks{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.track{padding:18px 20px;min-width:0}
+.track.it{background:var(--surface-2);border-left:1px solid var(--line)}
+.track-h{display:flex;align-items:center;gap:9px;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.track-h .who{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);font-weight:600}
+.track-h strong{font-size:13.5px}
+.say{font-size:15px;line-height:1.75;margin:0 0 14px;font-weight:500}
+.doblock{background:var(--blue-soft);border:1px solid #dbe7fb;border-radius:var(--r2);padding:12px 14px;margin-bottom:14px}
+.doblock .k{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--blue-d);text-transform:uppercase;margin-bottom:5px}
+.doblock p{margin:0;font-size:13.5px}
+.kv{display:grid;grid-template-columns:104px minmax(0,1fr);gap:6px 12px;font-size:13px;margin:0}
+.kv dt{font-family:var(--mono);font-size:11px;color:var(--muted);padding-top:2px}
+.kv dd{margin:0;word-break:break-word}
+.payload{background:#0f1b30;color:#d6dcea;font-family:var(--mono);font-size:11.5px;line-height:1.65;padding:14px;border-radius:var(--r2);overflow-x:auto;margin:0;max-height:400px}
+.payload .k{color:#8fb3d9}.payload .s{color:#d0a98a}.payload .n{color:#9fc79b}.payload .z{color:#7c838f}
+.payload mark{background:rgba(255,120,100,.35);color:#fff;padding:0 2px;border-radius:2px}
+.detail-f{padding:12px 18px;border-top:1px solid var(--line);background:var(--surface-2);font-size:12.5px;color:var(--muted)}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
+.stat{border:1px solid var(--blue-line);border-radius:var(--r);background:var(--surface);padding:15px 17px;box-shadow:0 8px 22px rgba(32,73,132,.05)}
+.stat .k{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.stat .v{font-size:30px;font-weight:900;letter-spacing:-.03em;line-height:1.2;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat .d{font-size:12px;color:var(--muted);margin-top:2px}
+.stat.alert{border-color:#f3ccc9;background:linear-gradient(180deg,#fffafa,#fff)}
+.stat.cost{border-color:#cfe0fb;background:linear-gradient(180deg,#f7faff,#fff)}
+.bar{height:7px;background:var(--line-soft);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--blue);border-radius:99px}
+.bar i.warn{background:var(--amber)}
+.bar i.red{background:var(--red)}
+.note{border:1px solid var(--blue-line);border-left:3px solid var(--blue);background:var(--surface);padding:12px 15px;border-radius:0 var(--r2) var(--r2) 0;font-size:13px}
+.note.amber{border-left-color:var(--amber)}
+.note b{display:block;margin-bottom:3px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.hint{font-size:11.5px;color:var(--muted-2);font-family:var(--mono)}
+.rowline{display:grid;grid-template-columns:minmax(120px,1.1fr) minmax(90px,2fr) 92px 108px;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-soft)}
+.toast{position:fixed;right:22px;bottom:22px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r2);font-size:13px;box-shadow:0 10px 28px rgba(0,0,0,.2);z-index:99;max-width:420px}
+
+@media(max-width:1040px){
+  .shell{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:row;align-items:center;overflow-x:auto;border-right:0;border-bottom:1px solid var(--blue-line)}
+  .brand{padding:12px 14px;white-space:nowrap}
+  .brand p{display:none}
+  .nav{display:flex;gap:6px;padding:8px}
+  .nav-group{display:none}
+  .nav button{white-space:nowrap;margin:0}
+  .side-foot{display:none}
+  .wrap{padding:18px 14px 50px}
+  .rowline{grid-template-columns:1fr 1fr;gap:6px}
+}
+
+/* Refined visual layer — preserves the original blue/white product palette. */
+body{
+  background:
+    radial-gradient(circle at 12% -8%,rgba(23,105,255,.17),transparent 34rem),
+    radial-gradient(circle at 92% 8%,rgba(66,165,255,.09),transparent 28rem),
+    linear-gradient(145deg,#f8fbff 0%,#eef5ff 50%,#f8fbff 100%);
+}
+.side{
+  background:rgba(255,255,255,.96);
+  border-right-color:rgba(184,204,235,.72);
+  box-shadow:16px 0 46px rgba(31,72,132,.07);
+}
+.brand{padding:24px 18px 19px}
+.brand .mark{gap:13px}
+.brand .mark span{
+  width:44px;height:44px;border-radius:15px;
+  box-shadow:0 12px 26px rgba(23,105,255,.26),inset 0 1px 0 rgba(255,255,255,.34)
+}
+.brand h1{font-size:15.5px;line-height:1.45}
+.nav{padding:10px 12px}
+.nav button{
+  min-height:42px;padding:10px 12px;border-radius:12px;
+  transition:background-color .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease
+}
+.nav button:hover{background:#f3f7ff;transform:translateX(2px)}
+.nav button.on{
+  background:linear-gradient(135deg,#edf4ff,#f5f8ff);
+  box-shadow:inset 3px 0 0 var(--blue),0 6px 16px rgba(23,105,255,.06)
+}
+.topbar{
+  position:sticky;top:0;z-index:20;min-height:60px;padding:12px 32px;
+  background:rgba(255,255,255,.88);border-bottom-color:rgba(184,204,235,.65);
+  box-shadow:0 8px 26px rgba(42,78,130,.045)
+}
+.persp{padding:3px;background:#f5f8fd;box-shadow:inset 0 1px 2px rgba(31,72,132,.05)}
+.persp button{padding:7px 15px;border-radius:999px;transition:all .18s ease}
+.persp button.on{background:linear-gradient(135deg,var(--blue),#3b8cff);box-shadow:0 6px 14px rgba(23,105,255,.22)}
+.page-head{margin-bottom:22px;padding:2px 2px 0}
+.page-head h2{margin:6px 0 6px;font-size:31px;line-height:1.25}
+.page-head p{font-size:14px;line-height:1.8;color:#60708a}
+.eyebrow{font-size:10px;letter-spacing:.24em}
+.card-h{min-height:52px;padding:15px 18px;background:linear-gradient(180deg,rgba(248,251,255,.9),rgba(255,255,255,.65))}
+.card-h h3{font-size:15px}
+.card-b{padding:19px}
+.chiprow{gap:8px!important}
+.chip{
+  min-height:34px;padding:6px 13px;background:#fbfdff;
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease,background-color .16s ease
+}
+.chip:hover{transform:translateY(-1px);border-color:#aac5f1;box-shadow:0 6px 13px rgba(42,78,130,.07)}
+.chip.on{background:linear-gradient(135deg,var(--blue),#3a8bff);box-shadow:0 7px 16px rgba(23,105,255,.2)}
+.filters{gap:14px}
+.f label{margin:0 0 7px 2px;color:#72809a}
+.f select,.f input{
+  min-height:42px;padding:9px 12px;border-color:#d5e1f2;background:#fbfdff;
+  box-shadow:0 1px 2px rgba(31,72,132,.025);
+  transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease
+}
+.f select:hover,.f input:hover{border-color:#aec7ed;background:#fff}
+.f select:focus,.f input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(23,105,255,.11);outline:none;background:#fff}
+.btn{min-height:42px;border-radius:12px;box-shadow:0 7px 16px rgba(23,105,255,.18);transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 10px 20px rgba(23,105,255,.23)}
+.btn.ghost{background:#fff;box-shadow:0 4px 12px rgba(42,78,130,.06)}
+.btn.small{min-height:30px;padding:4px 12px}
+.scroll{scrollbar-color:#bfd0e8 transparent;scrollbar-width:thin}
+.tbl thead th{padding:12px 15px;background:#f5f8fd;color:#6d7c94;border-bottom-color:#dce6f4}
+.tbl tbody td{padding:14px 15px}
+.tbl tbody tr[data-id]{transition:background-color .15s ease,box-shadow .15s ease}
+.tbl tbody tr[data-id]:hover{background:#f7faff;box-shadow:inset 3px 0 0 rgba(23,105,255,.45)}
+.tbl tbody tr.sel{background:#eef5ff;box-shadow:inset 3px 0 0 var(--blue)}
+.pill{padding:2px 10px}
+.detail{margin-top:20px;border-color:#abc8f4;box-shadow:0 18px 42px rgba(23,105,255,.13)}
+.detail-h{padding:15px 20px;background:linear-gradient(125deg,#1263f4,#438fff)}
+.track{padding:22px}
+.stat{padding:18px 19px;border-color:rgba(184,204,235,.72);box-shadow:0 12px 30px rgba(42,78,130,.065)}
+.stat .v{font-size:32px;margin-top:7px}
+.toast{right:26px;bottom:26px;border-radius:14px;box-shadow:0 16px 36px rgba(13,27,52,.25)}
+@media(max-width:1040px){
+  .topbar{padding:10px 16px;position:static}
+  .wrap{padding:22px 16px 54px}
+  .page-head h2{font-size:27px}
+}
+
+/* Accessibility baseline: no visible interface text below 16px. */
+body{font-size:16px}
+.brand .mark span,.brand h1,.brand p,.nav-group,.nav button,.nav button .n,.side-foot,
+.env,.persp-label,.persp button,.persp button .k,.eyebrow,.page-head p,.card-h h3,.card-h .sub,
+.sev-tag,.code,.pill,.f label,.f select,.f input,.chip,.btn,.btn.small,.tbl thead th,.tbl td .m,
+.tbl .num,.detail-h h3,.detail-h .m,.detail-h .act,.track-h .who,.track-h strong,.say,
+.doblock .k,.doblock p,.kv,.kv dt,.payload,.detail-f,.stat .k,.stat .d,.note,.legend,.hint,.toast{
+  font-size:16px!important
+}
+.nav button.on{box-shadow:0 6px 16px rgba(23,105,255,.06)}
+.tbl tbody tr[data-id]{cursor:default}
+.note-editor{display:grid;grid-template-columns:minmax(180px,1fr) auto;gap:8px;align-items:center}
+.note-editor input{width:100%;min-height:42px;padding:8px 10px;border:1px solid var(--blue-line);border-radius:10px;background:#f7f9fc}
+.note-editor input:not([readonly]){background:#fff;border-color:var(--blue);box-shadow:0 0 0 3px rgba(23,105,255,.1)}
+.note-display{min-height:42px;display:flex;align-items:center;line-height:1.55;color:var(--ink)}
+.note-display.empty{color:var(--muted)}
+.sort-btn{appearance:none;border:0;background:transparent;color:inherit;font:inherit;font-weight:800;padding:0;cursor:pointer;white-space:nowrap}
+.sort-btn:hover,.sort-btn.active{color:var(--blue)}
+.sort-btn small{font-size:16px;font-weight:700;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand">
+      <div class="mark"><span>AI</span><div><h1>AI 知識代理人管理後臺</h1><p>prototype · 2026-08-06</p></div></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">環境 <b>production</b><br>時區 <b>Asia/Taipei</b><br>稽核保存 <b>180 天</b></div>
+  </aside>
+  <div class="main">
+    <div class="wrap" id="wrap"></div>
+  </div>
+</div>
+<script>
+/* ==========================================================
+   稽核範圍分類：哪些進後臺 UI、哪些只留在 IT 日誌平台
+   ========================================================== */
+const OP_CLASSES = [
+  {id:'access',  t:'登入與准入',       d:'誰被擋在門外、誰想進後臺'},
+  {id:'identity',t:'帳號與權限管理',   d:'角色異動這類特權操作，成功也要記'},
+  {id:'content', t:'知識庫與代理人設定',d:'改提示詞、改開放範圍、上下架文件'},
+  {id:'data',    t:'資料匯出與查閱',   d:'誰把資料帶出去、誰查了稽核、回饋異動'},
+];
+const OP_MAP = Object.fromEntries(OP_CLASSES.map(o=>[o.id,o]));
+
+const OUT_OF_SCOPE = [
+  ['前台登入成功','一天上千筆，會把該看的事件淹掉。照常寫入日誌，UI 收合為統計。'],
+  ['停用帳號嘗試登入','停用若只在 AD 端，我們收到的只是「被拒」，看不到原因。待 IdP 或旗標確認。'],
+  ['未開通／非授權單位','需要我方有一道准入白名單才記得到，待確認系統是否有此判定。'],
+  ['非上班時段登入','時段未定義，縣府是否接受此判定未知。'],
+  ['文件刪除','軟刪除與實體刪除的舉證方式不同，待確認實作。'],
+  ['系統逾時、重試與基礎設施錯誤','管理者無可行動作，走 IT 監控與告警。'],
+  ['敏感輸入被擋 ／ Token 超標','已移除。前者目前無此機制，後者屬維運成本議題，改定期撈 DB。']
+];
+
+/* 中文說明與建議處理集中在這裡，前端不寫死；對外的錯誤碼對照表另行維護 */
+const MSG = {
+ sso_login_denied:      ['縣府 SSO 未核發登入憑證，這位使用者沒有進入 CityGPT。','請該員改從縣府 SSO 入口重新登入。同一人 24 小時內 3 次以上，轉 IT 檢查 AD 帳號狀態。','IdP 回傳 access_denied，未建立 session。'],
+ admin_access_denied:   ['一般使用者嘗試進入管理後臺，已被擋下。','確認該員是否確實需要管理者角色。若不是本人操作，通報政風與 IT。','准入判定在 gateway，未進入任何後臺 API。'],
+ admin_login_ok:        ['管理者登入後臺。','例行紀錄，不需處理。每季複核管理者名單時可回查登入頻率。','後臺登入一律留存，含來源 IP 與裝置。'],
+ role_revoke_ok:        ['已移除該帳號的後臺管理者權限，改為一般使用者。','特權異動已生效。請於每季管理者名單複核時一併確認。','角色降級同樣屬特權操作，必須留存。'],
+ feedback_submit:       ['使用者送出一則回饋評分與留言。','低分回饋可到回饋管理頁查看內容並填寫備註。','記錄評分與代理人，留言內容存於回饋資料表。'],
+ role_update_ok:        ['後臺角色已變更完成。','特權異動已生效，請於每季管理者名單複核時一併確認。','成功的特權操作也必須留存。'],
+ role_update_forbidden: ['有帳號嘗試變更角色但權限不足，已被阻擋。','確認該帳號是否應具管理者權限。非預期時立即通報政風與 IT。','通過准入但未通過 users.manage 檢查，屬權限提升嘗試。'],
+ agent_prompt_update:   ['代理人的系統提示詞被修改。','確認修改人與修改內容是否經過知識庫維護小組同意。提示詞會直接改變回答行為。','保留修改前後版本編號，內容存版本庫不進日誌。'],
+ agent_scope_expand:    ['代理人開放範圍從單一處室擴大為全府可用。','確認資料範圍是否適合全府查閱，特別是含個案資料的代理人。','存取範圍變更屬高風險設定，需雙人覆核。'],
+ agent_disable:         ['代理人已停用，使用者暫時查不到。','確認是否為預期的維護動作，並通知使用單位。','停用原因需填寫，供事後追溯。'],
+ kb_access_change:      ['知識庫存取層級由「限定」改為「公開」。','立即確認該知識庫內容是否可對全府公開；若含個案或未公告資料，請改回限定。','access 欄位變更，屬高風險設定。'],
+ doc_publish:           ['文件已發布，使用者開始可以查到並被引用。','例行紀錄。若為法規類文件，確認版本與生效日期正確。','記錄文件 ID 與版本，不記內容。'],
+ doc_unpublish:         ['文件已下架，使用者查不到也不會被引用。','確認是否為預期動作。法規改版下架請同步上傳新版。','下架原因需填寫。'],
+ audit_export_ok:       ['稽核紀錄已匯出。','匯出檔案含個資，請依縣府規定保管，不要放在共用資料夾。','匯出範圍與筆數一併留存。'],
+ audit_export_denied:   ['沒有權限的帳號嘗試匯出稽核紀錄，已被阻擋。','立即確認該帳號來源與操作人，並通報政風與 IT。','稽核紀錄本身是受保護資產，越權存取需列高優先追查。'],
+ audit_view:            ['管理者查閱稽核紀錄。','例行紀錄，不需處理。稽核紀錄的查閱行為本身也要留存。','含查詢條件與回傳筆數。'],
+ stats_export:          ['使用統計報表已匯出。','確認下載範圍是否符合縣府核可的資料範圍。','匯出欄位需與縣府確認後固定。'],
+};
+
+const E = (o)=>Object.assign({
+  timezone:'Asia/Taipei', application_name:'yunlin-gpt', environment:'production',
+  retention_days:180, user_agent:'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+  exception_type:null, error_code:null, changed_fields:[], needs_action:false, acked:false
+},o);
+
+const EVENTS = [
+E({event_id:'c2f0a91d-4b7e-4a08-9d31-70b5e1c2a884', event_time:'2026-08-06T10:12:44.318+08:00',
+  op:'content', severity:'WARNING', event_type:'configuration_change', event_action:'update_knowledge_base_access',
+  outcome:'success', msg:'kb_access_change', needs_action:true,
+  actor_type:'user', actor_id:'usr_20117', actor_display:'李承翰', actor_dept:'資訊處',
+  source_ip:'198.51.100.27', service_name:'kms-api', host_name:'kms-api-node-01',
+  trace_id:'5a71c0e3b28d4f169b02c7ae35d16640', request_id:'req_c0a17b42',
+  target_type:'knowledge_base', target_id:'kb_social_welfare', target_display:'社會福利知識庫',
+  changed_fields:['access'], http_method:'PATCH', http_path:'/api/v1/knowledge-bases/{kb_id}',
+  http_status_code:200, duration_ms:96, extra:{access_before:'restricted',access_after:'public',documents:214}}),
+
+E({event_id:'0b8e91d4-6c53-4f27-a4d9-51b0e77c3a08', event_time:'2026-08-06T08:41:19.402+08:00',
+  op:'identity', severity:'ERROR', event_type:'authorization_change', event_action:'update_user_role',
+  outcome:'failure', msg:'role_update_forbidden', needs_action:true,
+  error_code:'ROLE_UPDATE_FORBIDDEN',
+  actor_type:'user', actor_id:'usr_20117', actor_display:'李承翰', actor_dept:'資訊處',
+  source_ip:'198.51.100.27', service_name:'identity-api', host_name:'identity-api-node-01',
+  trace_id:'5c2d70ab914f4e8ab0c1d33e77aa2b19', request_id:'req_5f2ab180',
+  target_type:'user_account', target_id:'usr_31009', target_display:'黃思婷（社會處）',
+  changed_fields:['role'], http_method:'PATCH', http_path:'/api/v1/users/{user_id}/role',
+  http_status_code:403, duration_ms:38, extra:{required_permission:'users.manage',caller_role:'user'}}),
+
+E({event_id:'7d40aa19-8f61-49b2-b8e7-2c9a1f4d5b73', event_time:'2026-08-06T08:12:44.117+08:00',
+  op:'identity', severity:'INFO', event_type:'authorization_change', event_action:'update_user_role',
+  outcome:'success', msg:'role_update_ok',
+  actor_type:'user', actor_id:'usr_10003', actor_display:'黃品蓁', actor_dept:'社會處',
+  source_ip:'192.0.2.24', service_name:'identity-api', host_name:'identity-api-node-01',
+  trace_id:'11ba8e0c47d24f0f9a3c0d61b2e77c05', request_id:'req_2c40d7aa',
+  target_type:'user_account', target_id:'usr_44120', target_display:'張雅雯（1999 服務中心）',
+  changed_fields:['role'], http_method:'PATCH', http_path:'/api/v1/users/{user_id}/role',
+  http_status_code:200, duration_ms:82, extra:{role_before:'user',role_after:'admin'}}),
+
+E({event_id:'e5119c72-3b08-4a6d-9f31-6d2b7a0c8e54', event_time:'2026-08-06T07:58:10.664+08:00',
+  op:'data', severity:'ERROR', event_type:'data_export', event_action:'export_audit_log',
+  outcome:'failure', msg:'audit_export_denied', needs_action:true,
+  error_code:'EXPORT_PERMISSION_DENIED',
+  actor_type:'user', actor_id:'usr_50882', actor_display:'陳怡君', actor_dept:'工務處',
+  source_ip:'192.0.2.78', service_name:'audit-api', host_name:'audit-api-node-01',
+  trace_id:'92c0e7b1d4a5486fb31c8a0e2f6d5511', request_id:'req_9a1c4d02',
+  target_type:'audit_log', target_id:'audit_export_job', target_display:'稽核紀錄匯出',
+  http_method:'POST', http_path:'/api/v1/audit/exports', http_status_code:403, duration_ms:21,
+  extra:{requested_range_days:180,required_permission:'audit.export'}}),
+
+E({event_id:'a71b3c05-92de-4f18-8b40-6c1a70d2e995', event_time:'2026-08-06T07:44:02.771+08:00',
+  op:'content', severity:'WARNING', event_type:'configuration_change', event_action:'update_agent_prompt',
+  outcome:'success', msg:'agent_prompt_update', needs_action:true,
+  actor_type:'user', actor_id:'usr_44120', actor_display:'張雅雯', actor_dept:'1999 服務中心',
+  source_ip:'192.0.2.91', service_name:'agent-api', host_name:'agent-api-node-01',
+  trace_id:'d0b71ac5928e4f36b10c7a2d5e83f014', request_id:'req_71ba3c08',
+  target_type:'agent', target_id:'agt_1999_summary', target_display:'1999 客服摘要代理人',
+  changed_fields:['system_prompt','guardrail'], http_method:'PUT', http_path:'/api/v1/agents/{agent_id}/prompt',
+  http_status_code:200, duration_ms:128, extra:{version_before:'v4',version_after:'v5',reviewed_by:null}}),
+
+E({event_id:'4a7b2e08-91cd-4b55-8e02-c7f1a3b6d920', event_time:'2026-08-06T07:31:55.203+08:00',
+  op:'access', severity:'INFO', event_type:'authentication', event_action:'admin_console_login',
+  outcome:'success', msg:'admin_login_ok',
+  actor_type:'user', actor_id:'usr_10003', actor_display:'黃品蓁', actor_dept:'社會處',
+  source_ip:'192.0.2.24', service_name:'admin-gateway', host_name:'admin-gateway-node-01',
+  trace_id:'d81f0a4b6c294e37bb9a12c05e7d3388', request_id:'req_31f0a7b4',
+  target_type:'admin_console', target_id:'/admin', target_display:'管理後臺',
+  http_method:'GET', http_path:'/admin', http_status_code:200, duration_ms:64, extra:{role:'admin'}}),
+
+E({event_id:'8e13d55c-4470-4a0b-91f2-3b7c0e6a1d88', event_time:'2026-08-05T15:02:31.550+08:00',
+  op:'data', severity:'INFO', event_type:'data_export', event_action:'export_audit_log',
+  outcome:'success', msg:'audit_export_ok',
+  actor_type:'user', actor_id:'usr_10003', actor_display:'黃品蓁', actor_dept:'社會處',
+  source_ip:'198.51.100.27', service_name:'audit-api', host_name:'audit-api-node-01',
+  trace_id:'70a1c5e39b8d4f2ca6b013d75e2f8801', request_id:'req_1d90bb47',
+  target_type:'audit_log', target_id:'audit_export_30d', target_display:'稽核紀錄匯出（30 天）',
+  http_method:'POST', http_path:'/api/v1/audit/exports', http_status_code:200, duration_ms:4180,
+  extra:{format:'csv',range_days:30,rows:8214,masking:'enabled'}}),
+
+E({event_id:'4c07b1a9-6d38-4e52-b790-1a2c05e3d768', event_time:'2026-08-05T13:58:22.104+08:00',
+  op:'identity', severity:'INFO', event_type:'authorization_change', event_action:'revoke_admin_role',
+  outcome:'success', msg:'role_revoke_ok',
+  actor_type:'user', actor_id:'usr_10003', actor_display:'黃品蓁', actor_dept:'社會處',
+  source_ip:'192.0.2.24', service_name:'identity-api', host_name:'identity-api-node-01',
+  trace_id:'2b60ac71d5934e08b71ac025d3e09f16', request_id:'req_60b1ca27',
+  target_type:'user_account', target_id:'usr_50882', target_display:'陳怡君（工務處）',
+  changed_fields:['role'], http_method:'PATCH', http_path:'/api/v1/users/{user_id}/role',
+  http_status_code:200, duration_ms:77, extra:{role_before:'admin',role_after:'user',reason:'職務調整'}}),
+
+E({event_id:'6b81f30c-27ad-4e59-90b1-4c7e2a05d813', event_time:'2026-08-05T13:26:11.482+08:00',
+  op:'content', severity:'INFO', event_type:'configuration_change', event_action:'unpublish_document',
+  outcome:'success', msg:'doc_unpublish',
+  actor_type:'user', actor_id:'usr_31998', actor_display:'李佳蓉', actor_dept:'社會處',
+  source_ip:'192.0.2.61', service_name:'kms-api', host_name:'kms-api-node-01',
+  trace_id:'31c0a7be59d24f08b61a0c7d2e935f40', request_id:'req_0a71cb29',
+  target_type:'document', target_id:'doc-004', target_display:'社福津貼資格判斷 v3.1',
+  changed_fields:['published'], http_method:'PATCH', http_path:'/api/v1/documents/{doc_id}',
+  http_status_code:200, duration_ms:71, extra:{reason:'法規改版，待上傳新版'}}),
+
+E({event_id:'5f92a0d7-8c31-4b6e-a019-4d7b2c8f5310', event_time:'2026-08-05T11:07:12.336+08:00',
+  op:'access', severity:'WARNING', event_type:'access_control', event_action:'admin_console_access',
+  outcome:'failure', msg:'admin_access_denied', needs_action:true,
+  error_code:'ADMIN_ACCESS_FORBIDDEN',
+  actor_type:'user', actor_id:'usr_10482', actor_display:'王小明', actor_dept:'民政處',
+  source_ip:'192.0.2.24', service_name:'admin-gateway', host_name:'admin-gateway-node-01',
+  trace_id:'e4a7c0812b5d43f9a7c60b1e39d2f507', request_id:'req_0c71ab35',
+  target_type:'admin_console', target_id:'/admin', target_display:'管理後臺入口',
+  http_method:'GET', http_path:'/admin', http_status_code:403, duration_ms:12,
+  extra:{caller_role:'user',attempt_count_24h:2}}),
+
+E({event_id:'cd3711b0-6a48-4f92-81e5-0b2c7d19a634', event_time:'2026-08-05T10:19:58.207+08:00',
+  op:'content', severity:'INFO', event_type:'configuration_change', event_action:'publish_document',
+  outcome:'success', msg:'doc_publish',
+  actor_type:'user', actor_id:'usr_44120', actor_display:'張雅雯', actor_dept:'1999 服務中心',
+  source_ip:'192.0.2.91', service_name:'kms-api', host_name:'kms-api-node-02',
+  trace_id:'7b1c0ad3592e4f60a81b3c7d0e2f9145', request_id:'req_3c71b0da',
+  target_type:'document', target_id:'doc-006', target_display:'1999 話術與轉介原則 v5.2',
+  changed_fields:['published','version'], http_method:'PATCH', http_path:'/api/v1/documents/{doc_id}',
+  http_status_code:200, duration_ms:88, extra:{knowledge_base:'市政服務知識庫'}}),
+
+E({event_id:'3b71e9ca-04d8-4b2f-8c60-7a1d59e0f236', event_time:'2026-08-05T08:39:57.480+08:00',
+  op:'access', severity:'WARNING', event_type:'authentication', event_action:'sso_login',
+  outcome:'failure', msg:'sso_login_denied', error_code:'SSO_ACCESS_DENIED',
+  actor_type:'anonymous', actor_id:'anon_sso_callback', actor_display:'未建立工作階段', actor_dept:'—',
+  source_ip:'198.51.100.14', service_name:'identity-api', host_name:'identity-api-node-02',
+  trace_id:'8c0f2b7a15e34d90a2b7c6013d5e8f41', request_id:'req_2f70cb18',
+  target_type:'user_account', target_id:'usr_10482', target_display:'王小明（民政處）',
+  http_method:'POST', http_path:'/api/v1/auth/sso/callback', http_status_code:401, duration_ms:41,
+  extra:{idp:'yunlin-adfs',idp_reason:'access_denied'}}),
+
+E({event_id:'e08c1a37-5b92-4d60-a4f1-72c0b3d95e18', event_time:'2026-08-04T17:51:03.664+08:00',
+  op:'content', severity:'WARNING', event_type:'configuration_change', event_action:'update_agent_scope',
+  outcome:'success', msg:'agent_scope_expand', needs_action:true,
+  actor_type:'user', actor_id:'usr_10003', actor_display:'黃品蓁', actor_dept:'社會處',
+  source_ip:'192.0.2.24', service_name:'agent-api', host_name:'agent-api-node-01',
+  trace_id:'c710ba0d29384e5fa016b7c2d3e08f91', request_id:'req_8b0c71ad',
+  target_type:'agent', target_id:'agt_social_welfare', target_display:'社福資格初判助手',
+  changed_fields:['visibility'], http_method:'PATCH', http_path:'/api/v1/agents/{agent_id}',
+  http_status_code:200, duration_ms:74, extra:{visibility_before:'社會處',visibility_after:'全府員工'}}),
+
+E({event_id:'df5a3c90-1b27-4e68-90ad-2c81f70b6e13', event_time:'2026-08-04T16:05:19.774+08:00',
+  op:'data', severity:'INFO', event_type:'audit_access', event_action:'view_audit_log',
+  outcome:'success', msg:'audit_view',
+  actor_type:'user', actor_id:'usr_10003', actor_display:'黃品蓁', actor_dept:'社會處',
+  source_ip:'198.51.100.27', service_name:'audit-api', host_name:'audit-api-node-01',
+  trace_id:'20b7ec13af9d4c05b81a0f627d3e9c48', request_id:'req_7e0d31ba',
+  target_type:'audit_log', target_id:'audit_query', target_display:'稽核紀錄查詢',
+  http_method:'GET', http_path:'/api/v1/audit/events', http_status_code:200, duration_ms:210,
+  extra:{filter_range_days:7,result_count:38}}),
+
+E({event_id:'d3a71c05-8b29-4f60-91e7-05c2a0b3d941', event_time:'2026-08-04T15:33:48.219+08:00',
+  op:'data', severity:'INFO', event_type:'feedback', event_action:'submit_feedback',
+  outcome:'success', msg:'feedback_submit',
+  actor_type:'user', actor_id:'usr_31998', actor_display:'李佳蓉', actor_dept:'社會處',
+  source_ip:'192.0.2.61', service_name:'feedback-api', host_name:'feedback-api-node-01',
+  trace_id:'c05a71b3d2984e60a71b0c25d3e9f018', request_id:'req_a35c710b',
+  target_type:'feedback_case', target_id:'fb_20260804_0031', target_display:'社福資格助手 回饋',
+  http_method:'POST', http_path:'/api/v1/feedback', http_status_code:200, duration_ms:112,
+  extra:{score:8,agent:'社福資格助手',has_comment:true}}),
+
+E({event_id:'1a49c0e7-83b5-4d26-97f0-2c81b0d5a374', event_time:'2026-08-04T14:12:40.905+08:00',
+  op:'data', severity:'INFO', event_type:'data_export', event_action:'export_usage_report',
+  outcome:'success', msg:'stats_export',
+  actor_type:'user', actor_id:'usr_44120', actor_display:'張雅雯', actor_dept:'1999 服務中心',
+  source_ip:'192.0.2.91', service_name:'stats-api', host_name:'stats-api-node-01',
+  trace_id:'af03c71b52d94e68b012a7c5d3e0f918', request_id:'req_2d71ac05',
+  target_type:'report', target_id:'rpt_usage_202607', target_display:'2026-07 使用統計報表',
+  http_method:'POST', http_path:'/api/v1/stats/exports', http_status_code:200, duration_ms:1620,
+  extra:{format:'xlsx',rows:332,scope:'department_summary'}}),
+
+E({event_id:'82d0c15b-97a4-4e31-b06f-3c1a70e2d548', event_time:'2026-08-03T16:47:29.611+08:00',
+  op:'content', severity:'INFO', event_type:'configuration_change', event_action:'disable_agent',
+  outcome:'success', msg:'agent_disable',
+  actor_type:'user', actor_id:'usr_20117', actor_display:'李承翰', actor_dept:'資訊處',
+  source_ip:'198.51.100.27', service_name:'agent-api', host_name:'agent-api-node-02',
+  trace_id:'5e91a0c7b234d4f68b01c72a3d0e9f15', request_id:'req_a05c71bd',
+  target_type:'agent', target_id:'agt_audit_query', target_display:'稽核紀錄查詢助理',
+  changed_fields:['enabled'], http_method:'PATCH', http_path:'/api/v1/agents/{agent_id}',
+  http_status_code:200, duration_ms:63, extra:{reason:'知識庫重建中，暫停對外服務'}})
+];
+</script>
+<script>
+const USERS = [
+ {id:'usr_10003', name:'黃品蓁', dept:'社會處', sso:'active',  role:'admin', last:'2026-08-06 08:12', tokens:118400},
+ {id:'usr_10482', name:'王小明', dept:'民政處', sso:'active',  role:'user',  last:'2026-08-06 09:18', tokens:382400},
+ {id:'usr_20117', name:'李承翰', dept:'資訊處', sso:'active',  role:'admin', last:'2026-08-06 10:12', tokens:96200},
+ {id:'usr_31009', name:'黃思婷', dept:'社會處', sso:'active',  role:'user',  last:'2026-08-05 17:22', tokens:243900},
+ {id:'usr_44120', name:'張雅雯', dept:'1999 服務中心', sso:'active', role:'admin', last:'2026-08-06 07:55', tokens:151700},
+ {id:'usr_50882', name:'陳怡君', dept:'工務處', sso:'active',  role:'user',  last:'2026-08-06 07:58', tokens:88300},
+ {id:'usr_60771', name:'林志偉', dept:'建設處', sso:'disabled',role:'user',  last:'2026-08-05 09:26', tokens:0},
+ {id:'usr_31998', name:'李佳蓉', dept:'社會處', sso:'sync_error', role:'user', last:'2026-08-04 17:22', tokens:64100}
+];
+const TOP_USERS = [
+ {n:'王小明', d:'民政處', t:382400},
+ {n:'黃思婷', d:'社會處', t:243900},
+ {n:'張雅雯', d:'1999 服務中心', t:151700}
+];
+const DEPT_USAGE = [
+ {d:'1999 服務中心', q:6120, t:762000},{d:'民政處', q:5100, t:688000},
+ {d:'社會處', q:4380, t:601000},{d:'工務處', q:2940, t:404000},
+ {d:'建設處', q:1880, t:262000},{d:'資訊處', q:1240, t:171000}
+];
+const FEEDBACK = [
+ {time:'2026-08-10T14:32:00+08:00', u:'林怡君', d:'社會處', agent:'社福資格助手', score:9, q:'社福津貼資格判斷要準備哪些文件？', c:'清單很清楚，也有附上資料來源。', note:'已請社會處確認文件清單。'},
+ {time:'2026-08-10T11:18:00+08:00', u:'張雅雯', d:'1999 服務中心', agent:'1999 服務助手', score:4, q:'1999 轉接到承辦窗口時要提供哪些資料？', c:'答案只說「請留下資料」，沒有列出欄位。'},
+ {time:'2026-08-09T16:45:00+08:00', u:'陳志豪', d:'建設處', agent:'建築管理助手', score:8, q:'建築執照審查通常需要幾個工作天？', c:'天數說明清楚，也有提醒實際案件可能不同。'},
+ {time:'2026-08-09T09:07:00+08:00', u:'黃志明', d:'工務處', agent:'工務案件助手', score:3, q:'道路施工案件查詢不到目前進度，該怎麼處理？', c:'答案太籠統，還是不知道要去哪裡查。'},
+ {time:'2026-08-08T15:26:00+08:00', u:'李佳蓉', d:'社會處', agent:'社福資格助手', score:8, q:'社會救助申請清單有分成人與兒少嗎？', c:'分類清楚，希望附上最新表單連結。'}
+];
+
+/* ---------- app ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const state={page:'audit', persp:'admin', period:'month', from:'2026-07-11', to:'2026-08-10',
+  op:'', auditDept:'', kw:'', sel:null, userKw:'', userSort:'name', editNote:null,
+  feedbackSort:'score', feedbackDir:'desc', feedbackDept:'', feedbackScore:''};
+
+const PAGES=[
+ {id:'users',   n:'01', t:'使用者與權限'},
+ {id:'stats',   n:'02', t:'使用統計'},
+ {id:'feedback',n:'03', t:'回饋管理'},
+ {id:'audit',   n:'04', t:'稽核日誌'}
+];
+
+function sevBars(s){return '<span class="sev" data-s="'+s+'"><i></i><i></i><i></i><i></i></span>'}
+function sevTag(s){return '<span class="sev-tag" data-s="'+s+'">'+sevBars(s)+s+'</span>'}
+function fmtTime(t,full){const d=t.replace('T',' ').replace('+08:00','');return full?d:d.slice(5,16)}
+function num(n){return n==null?'—':n.toLocaleString('en-US')}
+function M(e,i){return (MSG[e.msg]||['','',''])[i]}
+
+function jsonView(obj,hl){
+  const j=JSON.stringify(obj,null,2);
+  let h=esc(j)
+    .replace(/&quot;([a-z_0-9]+)&quot;:/g,'<span class="k">"$1"</span>:')
+    .replace(/: (&quot;[^&]*?&quot;)/g,': <span class="s">$1</span>')
+    .replace(/: (-?\d+\.?\d*)/g,': <span class="n">$1</span>')
+    .replace(/: (null|true|false)/g,': <span class="z">$1</span>');
+  if(hl) h=h.split(hl).join('<mark>'+hl+'</mark>');
+  return '<pre class="payload">'+h+'</pre>';
+}
+function isoPayload(e){
+  return {event_id:e.event_id,event_time:e.event_time,timezone:e.timezone,event_type:e.event_type,
+    severity:e.severity,event_action:e.event_action,outcome:e.outcome,
+    actor_type:e.actor_type,actor_id:e.actor_id,source_ip:e.source_ip,user_agent:e.user_agent,
+    service_name:e.service_name,application_name:e.application_name,environment:e.environment,
+    host_name:e.host_name,trace_id:e.trace_id,request_id:e.request_id,target_type:e.target_type,
+    target_id:e.target_id,changed_fields:e.changed_fields,error_code:e.error_code,
+    exception_type:e.exception_type,http_method:e.http_method,http_path:e.http_path,
+    http_status_code:e.http_status_code,duration_ms:e.duration_ms,
+    retention_days:e.retention_days,context:e.extra||null};
+}
+
+function renderNav(){
+  $('#nav').innerHTML='<div class="nav-group">管理後臺</div>'+PAGES.map(i=>
+    '<button data-p="'+i.id+'" class="'+(state.page===i.id?'on':'')+'"><span class="n">'+i.n+'</span><span>'+i.t+'</span></button>').join('');
+  $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{state.page=b.dataset.p;state.sel=null;render()});
+}
+
+/* ---------- 稽核日誌 ---------- */
+function filtered(){
+  return EVENTS.filter(e=>{
+    if(state.op&&e.op!==state.op)return false;
+    if(state.auditDept&&e.actor_dept!==state.auditDept)return false;
+    if(state.kw){const k=state.kw.toLowerCase();
+      const hay=[e.actor_display,e.actor_dept].join(' ').toLowerCase();
+      if(hay.indexOf(k)<0)return false}
+    return true;
+  });
+}
+function pageAudit(){
+  const list=filtered(), isAdmin=state.persp==='admin';
+  const depts=[...new Set(EVENTS.map(e=>e.actor_dept))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+
+  let h='<div class="page-head"><div class="eyebrow">Audit trail</div><h2>稽核日誌</h2>'+
+   '<p>只記人員操作，收斂為四大類：登入與准入、帳號與權限、知識庫與代理人設定、資料匯出與查閱。系統自己的逾時、重試與基礎設施錯誤不進這裡，留在 IT 的日誌平台。</p></div>';
+
+
+  h+='<div class="card" style="margin-bottom:16px"><div class="card-b">'+
+   '<div class="filters">'+
+    '<div class="f"><label>部門</label><select id="fdept"><option value="">全部部門</option>'+depts.map(d=>'<option value="'+esc(d)+'" '+(state.auditDept===d?'selected':'')+'>'+esc(d)+'</option>').join('')+'</select></div>'+
+    '<div class="f"><label>搜尋</label><input id="fkw" placeholder="搜尋人名或部門" value="'+esc(state.kw)+'"></div>'+
+    '<div class="f"><label>行為分類</label><select id="fop"><option value="">全部行為</option>'+OP_CLASSES.map(o=>'<option value="'+o.id+'" '+(state.op===o.id?'selected':'')+'>'+o.t+'</option>').join('')+'</select></div>'+
+   '</div></div></div>';
+
+  h+='<div class="card"><div class="card-h"><h3>'+(isAdmin?'人員操作紀錄':'人員操作紀錄（技術檢視）')+'</h3>'+
+   '<span class="sub">'+list.length+' 筆</span></div>';
+
+  h+='<div class="scroll"><table class="tbl"><thead><tr>'+
+   (isAdmin
+    ? '<th style="width:150px">時間</th><th style="width:190px">操作者</th><th>做了什麼</th><th style="width:110px">結果</th>'
+    : '<th style="width:92px">severity</th><th style="width:150px">event_time</th><th style="width:130px">actor_id</th><th>event_action / error_code</th><th style="width:70px" class="num">status</th><th style="width:78px" class="num">ms</th><th style="width:170px">trace_id</th>')+
+   '</tr></thead><tbody>';
+
+  if(!list.length) h+='<tr><td colspan="'+(isAdmin?4:7)+'" style="padding:32px;text-align:center;color:var(--muted)">沒有符合條件的事件。請調整篩選條件或清空關鍵字再試一次。</td></tr>';
+
+  list.forEach(e=>{
+    const on=state.sel===e.event_id, op=OP_MAP[e.op]||{};
+    if(isAdmin){
+      h+='<tr data-id="'+e.event_id+'" class="'+(on?'sel':'')+'">'+
+       '<td class="m">'+fmtTime(e.event_time)+'</td>'+
+       '<td><div class="t">'+esc(e.actor_display)+'</div><div class="m">'+esc(e.actor_dept)+'</div></td>'+
+       '<td><div class="t">'+esc(op.t)+'</div></td>'+
+       '<td>'+(e.outcome==='success'?'<span class="pill ok">成功</span>':'<span class="pill bad">被擋</span>')+'</td></tr>';
+    }else{
+      h+='<tr data-id="'+e.event_id+'" class="'+(on?'sel':'')+'">'+
+       '<td>'+sevTag(e.severity)+'</td>'+
+       '<td class="m">'+fmtTime(e.event_time,1)+'</td>'+
+       '<td class="m">'+e.actor_id+'<div>'+e.actor_type+'</div></td>'+
+       '<td><div class="m" style="color:var(--text);font-weight:600">'+e.event_action+'</div>'+
+         '<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">'+
+         (e.error_code?'<span class="code err">'+e.error_code+'</span>':'<span class="code ok">outcome: success</span>')+
+         (e.exception_type?'<span class="code">'+e.exception_type+'</span>':'')+
+         '<span class="m">'+e.service_name+'</span></div></td>'+
+       '<td class="num">'+(e.http_status_code||'—')+'</td>'+
+       '<td class="num">'+num(e.duration_ms)+'</td>'+
+       '<td class="m">'+e.trace_id.slice(0,16)+'…</td></tr>';
+    }
+  });
+  h+='</tbody></table></div></div>';
+  return h;
+}
+
+function scopePanel(){
+  const cnt=id=>EVENTS.filter(e=>e.op===id).length;
+  return '<div class="grid2" style="margin-top:20px">'+
+   '<div class="card"><div class="card-h"><h3>會出現在這一頁的紀錄</h3><span class="sub">人員操作為主</span></div><div class="card-b">'+
+    OP_CLASSES.map(o=>'<div style="display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line-soft)">'+
+      '<div><div class="t">'+o.t+'</div><div class="m" style="color:var(--muted)">'+o.d+'</div></div>'+
+      '<div class="num">'+cnt(o.id)+'</div></div>').join('')+
+   '</div></div>'+
+   '<div class="card"><div class="card-h"><h3>不會出現在這一頁</h3><span class="sub">留在 IT 日誌平台／SIEM</span></div><div class="card-b">'+
+    OUT_OF_SCOPE.map(o=>'<div style="padding:9px 0;border-bottom:1px solid var(--line-soft)">'+
+      '<div class="t" style="color:var(--muted)">'+o[0]+'</div><div class="m" style="color:var(--muted-2)">'+o[1]+'</div></div>').join('')+
+   '</div></div></div>'+
+   '<div class="note" style="margin-top:16px"><b>判斷原則</b>一筆紀錄要進這一頁，要同時通過兩個問題：主體是「人」嗎？管理者看到之後有事情可以做嗎？兩個都是才留。只有其中一個成立的，交給 IT 的日誌平台就好。</div>';
+}
+
+function detailPanel(e){
+  if(!e)return'';
+  const op=OP_MAP[e.op]||{};
+  return '<div class="detail">'+
+   '<div class="detail-h"><h3>事件細節</h3><span class="act">'+e.event_action+'</span>'+
+     '<div class="spacer"></div><span class="m">'+fmtTime(e.event_time,1)+' '+e.timezone+'</span></div>'+
+   '<div class="tracks">'+
+    '<div class="track">'+
+      '<div class="track-h"><span class="who">左軌</span><strong>給後臺管理者</strong><span class="pill">'+op.t+'</span></div>'+
+      '<p class="say">'+esc(M(e,0))+'</p>'+
+      '<div class="doblock"><div class="k">建議處理</div><p>'+esc(M(e,1))+'</p></div>'+
+      '<dl class="kv">'+
+        '<dt>操作者</dt><dd>'+esc(e.actor_display)+'　'+esc(e.actor_dept)+'</dd>'+
+        '<dt>對象</dt><dd>'+esc(e.target_display)+'</dd>'+
+        '<dt>結果</dt><dd>'+(e.outcome==='success'?'成功':'失敗／被擋下')+'</dd>'+
+        '<dt>來源 IP</dt><dd class="m">'+e.source_ip+'</dd>'+
+        (e.notify?'<dt>通知</dt><dd>'+e.notify.map(function(n){return '<span class="pill blue">'+n+'</span>'}).join(' ')+'</dd>':'')+
+        (e.changed_fields&&e.changed_fields.length?'<dt>異動欄位</dt><dd>'+e.changed_fields.join('、')+'<span class="hint">（只記欄位名稱，不存修改前後值）</span></dd>':'')+
+        '<dt>保存期限</dt><dd>'+e.retention_days+' 天</dd>'+
+      '</dl></div>'+
+    '<div class="track it">'+
+      '<div class="track-h"><span class="who">右軌</span><strong>給縣府 IT／RD</strong>'+
+        (e.error_code?'<span class="code err">'+e.error_code+'</span>':'<span class="code ok">outcome: '+e.outcome+'</span>')+'</div>'+
+      '<div class="doblock" style="border-left-color:var(--info)"><div class="k" style="color:var(--info)">技術判讀</div><p>'+esc(M(e,2))+'</p></div>'+
+      jsonView(isoPayload(e), e.error_code||null)+
+      '<div style="margin-top:10px" class="hint">此 JSON 為送往日誌平台的原始格式，欄位依 ISO 27001 系統日誌欄位規格。</div>'+
+    '</div></div>'+
+   '<div class="detail-f">同一筆事件、兩種語言。左軌是管理者要看的話，右軌是 IT 要拿的欄位，切換右上角檢視身分即可比對。</div></div>';
+}
+
+/* ---------- 使用者與權限 ---------- */
+function pageUsers(){
+  const S={active:['SSO 有效','ok'],disabled:['SSO 停用','bad'],sync_error:['同步異常','warn']};
+  const keyword=state.userKw.trim().toLowerCase();
+  const list=USERS.filter(u=>!keyword||[u.name,u.id,u.dept].join(' ').toLowerCase().includes(keyword)).slice();
+  const roleRank={admin:0,user:1};
+  list.sort((a,b)=>{
+    if(state.userSort==='dept')return a.dept.localeCompare(b.dept,'zh-Hant')||a.name.localeCompare(b.name,'zh-Hant');
+    if(state.userSort==='last')return b.last.localeCompare(a.last);
+    if(state.userSort==='role')return roleRank[a.role]-roleRank[b.role]||a.name.localeCompare(b.name,'zh-Hant');
+    return a.name.localeCompare(b.name,'zh-Hant');
+  });
+  let h='<div class="page-head"><div class="eyebrow">Users &amp; roles</div><h2>使用者與權限</h2>'+
+   '<p>帳號與部門由 SSO／AD 帶入，本後臺只決定誰是管理者。任何角色異動——成功或失敗——都會寫進稽核日誌。</p></div>';
+  h+='<div class="card"><div class="card-h"><h3>SSO 使用者清單</h3><span class="sub">'+USERS.length+' 人</span>'+
+   '</div><div class="card-b" style="padding-bottom:14px"><div class="filters" style="grid-template-columns:minmax(280px,2fr) minmax(180px,1fr)">'+
+   '<div class="f"><label>搜尋使用者</label><input id="userkw" placeholder="搜尋姓名、使用者編號或部門" value="'+esc(state.userKw)+'"></div>'+
+   '<div class="f"><label>排序方式</label><select id="usersort">'+
+   '<option value="name" '+(state.userSort==='name'?'selected':'')+'>姓名</option>'+
+   '<option value="dept" '+(state.userSort==='dept'?'selected':'')+'>部門</option>'+
+   '<option value="last" '+(state.userSort==='last'?'selected':'')+'>最近登入</option>'+
+   '<option value="role" '+(state.userSort==='role'?'selected':'')+'>角色：管理者優先</option>'+
+   '</select></div></div><div class="hint" style="margin-top:9px">顯示 '+list.length+'／'+USERS.length+' 位使用者</div></div>'+
+   '<div class="scroll"><table class="tbl"><thead><tr>'+
+   '<th>使用者</th><th style="width:150px">部門</th><th style="width:110px">SSO 狀態</th><th style="width:170px">最後登入</th><th style="width:170px">後臺角色</th></tr></thead><tbody>';
+  if(!list.length)h+='<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--muted)">找不到符合條件的使用者，請更換關鍵字。</td></tr>';
+  list.forEach(u=>{
+    h+='<tr style="cursor:default"><td><div class="t">'+u.name+'</div><div class="m">'+u.id+'</div></td>'+
+     '<td>'+u.dept+'</td><td><span class="pill '+S[u.sso][1]+'">'+S[u.sso][0]+'</span></td>'+
+     '<td class="m">'+u.last+'</td>'+
+     '<td><select class="rolesel" data-u="'+u.id+'"><option value="user" '+(u.role==='user'?'selected':'')+'>一般使用者</option><option value="admin" '+(u.role==='admin'?'selected':'')+'>管理者</option></select></td></tr>';
+  });
+  h+='</tbody></table></div></div>'+
+   '<div class="note" style="margin-top:16px"><b>邊界：帳號生命週期以 SSO 為準</b>停用、離職、部門調整都在 AD 端處理，本後臺只顯示同步結果。密碼輸錯、可疑 IP、暴力登入由 SSO／AD 稽核，CityGPT 不重複判斷。</div>';
+  return h;
+}
+
+/* ---------- 使用統計 ---------- */
+const STATS={
+ day:{label:'日',q:742,u:186,a:9,unit:'本日',
+   dept:[{d:'1999 服務中心',q:212,t:26400},{d:'民政處',q:176,t:23100},{d:'社會處',q:148,t:20200},
+         {d:'工務處',q:101,t:13600},{d:'建設處',q:64,t:8800},{d:'資訊處',q:41,t:5700}]},
+ week:{label:'週',q:4980,u:271,a:9,unit:'本週',
+   dept:[{d:'1999 服務中心',q:1408,t:175000},{d:'民政處',q:1172,t:158000},{d:'社會處',q:1007,t:138000},
+         {d:'工務處',q:676,t:92800},{d:'建設處',q:432,t:60200},{d:'資訊處',q:285,t:39300}]},
+ month:{label:'月',q:21660,u:332,a:9,unit:'近 30 日',
+   dept:[{d:'1999 服務中心',q:6120,t:762000},{d:'民政處',q:5100,t:688000},{d:'社會處',q:4380,t:601000},
+         {d:'工務處',q:2940,t:404000},{d:'建設處',q:1880,t:262000},{d:'資訊處',q:1240,t:171000}]}
+};
+function pageStats(){
+  const d=STATS[state.period], max=Math.max.apply(null,d.dept.map(function(x){return x.q}));
+  let h='<div class="page-head"><div class="eyebrow">Usage</div><h2>使用統計</h2>'+
+   '<p>一般提問只做用量與品質統計，不逐筆寫進稽核日誌。可依日、週、月檢視，或自訂時間區段後匯出。</p></div>';
+
+  h+='<div class="card" style="margin-bottom:16px"><div class="card-b">'+
+   '<div class="filters">'+
+    '<div class="f"><label>統計區間</label><div class="chiprow">'+
+      ['day','week','month'].map(function(k){return '<button class="chip '+(state.period===k?'on':'')+'" data-period="'+k+'">'+STATS[k].label+'</button>'}).join('')+
+    '</div></div>'+
+    '<div class="f"><label>起始日期</label><input type="date" id="dfrom" value="'+state.from+'"></div>'+
+    '<div class="f"><label>結束日期</label><input type="date" id="dto" value="'+state.to+'"></div>'+
+    '<div class="f"><label>&nbsp;</label><button class="btn ghost" id="statexport">匯出報表</button></div>'+
+   '</div>'+
+   '<div class="hint" style="margin-top:10px">目前顯示：'+state.from+' 至 '+state.to+'（以'+d.label+'為單位）。匯出格式 CSV／XLSX，匯出行為會寫入一筆稽核紀錄。</div>'+
+   '</div></div>';
+
+  h+='<div class="grid3" style="margin-bottom:16px">'+
+   '<div class="stat"><div class="k">總提問數</div><div class="v">'+num(d.q)+'</div><div class="d">'+d.unit+'</div></div>'+
+   '<div class="stat"><div class="k">使用人數</div><div class="v">'+num(d.u)+'</div><div class="d">至少成功送出 1 次</div></div>'+
+   '<div class="stat"><div class="k">啟用中代理人</div><div class="v">'+d.a+'</div><div class="d">對外提供服務</div></div></div>';
+
+  h+='<div class="card"><div class="card-h"><h3>部門提問次數</h3><span class="sub">'+d.unit+'</span></div><div class="card-b">';
+  d.dept.forEach(function(x){
+    h+='<div style="display:grid;grid-template-columns:130px 1fr 90px 110px;gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-soft)">'+
+     '<div>'+x.d+'</div><div class="bar"><i style="width:'+(x.q/max*100)+'%"></i></div>'+
+     '<div class="num">'+num(x.q)+'</div><div class="num" style="color:var(--muted)">'+num(x.t)+' tk</div></div>';
+  });
+  h+='</div></div>';
+  return h;
+}
+
+/* ---------- 回饋管理 ---------- */
+function pageFeedback(){
+  const pos=FEEDBACK.filter(f=>f.score>=7).length, neg=FEEDBACK.length-pos;
+  const rate=Math.round(pos/FEEDBACK.length*100), negRate=100-rate;
+  const departments=[...new Set(FEEDBACK.map(f=>f.d))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+  const sortValue=(f,key)=>key==='time'?Date.parse(f.time):key==='user'?f.u:key==='agent'?f.agent:key==='score'?f.score:key==='content'?f.q:(f.note||'');
+  const showTime=value=>new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(value));
+  const direction=state.feedbackDir==='desc'?-1:1;
+  const rows=FEEDBACK.map((f,i)=>({f,i})).filter(({f})=>{
+    if(state.feedbackDept&&f.d!==state.feedbackDept)return false;
+    if(state.feedbackScore==='positive'&&f.score<7)return false;
+    if(state.feedbackScore==='negative'&&f.score>=7)return false;
+    return true;
+  }).sort((a,b)=>{
+    const av=sortValue(a.f,state.feedbackSort),bv=sortValue(b.f,state.feedbackSort);
+    const result=typeof av==='number'?av-bv:String(av).localeCompare(String(bv),'zh-Hant');
+    return result*direction||a.i-b.i;
+  });
+  const sortHead=(key,label,width,cls='')=>'<th '+(width?'style="width:'+width+'" ':'')+'class="'+cls+'"><button class="sort-btn '+(state.feedbackSort===key?'active':'')+'" data-feedback-sort="'+key+'">'+label+(state.feedbackSort===key?'<small>'+(state.feedbackDir==='desc'?'高到低':'低到高')+'</small>':'')+'</button></th>';
+  let h='<div class="page-head"><h2>回饋管理</h2></div>';
+  h+='<div class="grid3" style="margin-bottom:16px">'+
+   '<div class="stat"><div class="k">回饋總數</div><div class="v">'+FEEDBACK.length+'</div></div>'+
+   '<div class="stat"><div class="k">正向回饋</div><div class="v">'+pos+'</div><div class="d">'+rate+'% · 7–10 分<div class="bar" style="margin-top:7px"><i style="width:'+rate+'%"></i></div></div></div>'+
+  '<div class="stat"><div class="k">負向回饋</div><div class="v" style="color:var(--amber)">'+neg+'</div><div class="d">'+negRate+'% · 1–6 分</div></div></div>';
+  h+='<div class="card" style="margin-bottom:16px"><div class="card-b"><div class="filters">'+
+   '<div class="f"><label>部門</label><select id="fbdept"><option value="">全部部門</option>'+departments.map(d=>'<option value="'+esc(d)+'" '+(state.feedbackDept===d?'selected':'')+'>'+esc(d)+'</option>').join('')+'</select></div>'+
+   '<div class="f"><label>評分</label><select id="fbscore"><option value="">全部評分</option><option value="positive" '+(state.feedbackScore==='positive'?'selected':'')+'>正向（7–10 分）</option><option value="negative" '+(state.feedbackScore==='negative'?'selected':'')+'>負向（1–6 分）</option></select></div>'+
+  '</div></div></div>';
+  h+='<div class="card"><div class="card-h"><h3>回饋列表</h3><span class="sub">'+rows.length+' 筆</span></div><div class="scroll"><table class="tbl"><thead><tr>'+
+   sortHead('time','評分時間','180px')+sortHead('user','使用者','130px')+sortHead('agent','代理人','150px')+sortHead('score','分數','150px','num')+sortHead('content','問題與留言')+sortHead('note','備註','330px')+'</tr></thead><tbody>';
+  if(!rows.length)h+='<tr><td colspan="6" style="padding:32px;text-align:center;color:var(--muted)">找不到符合條件的回饋。</td></tr>';
+  rows.forEach(({f,i})=>{
+    const editing=state.editNote===i;
+    h+='<tr style="cursor:default"><td><div class="t">'+showTime(f.time)+'</div></td><td><div class="t">'+f.u+'</div><div class="m">'+f.d+'</div></td>'+
+     '<td>'+f.agent+'</td><td class="num"><span class="pill '+(f.score>=7?'ok':'bad')+'">'+f.score+'</span></td>'+
+     '<td><div class="t">'+esc(f.q)+'</div><div class="m" style="margin-top:3px">'+esc(f.c)+'</div></td>'+
+     '<td><div class="note-editor">'+
+     (editing?'<input class="fbnote" data-i="'+i+'" value="'+esc(f.note||'')+'" placeholder="輸入備註">':'<div class="note-display '+(f.note?'':'empty')+'">'+esc(f.note||'尚無備註')+'</div>')+
+     (editing?'<button class="btn small save-note" data-i="'+i+'">儲存</button>':'<button class="btn ghost small edit-note" data-i="'+i+'">'+(f.note?'修改':'新增')+'</button>')+
+     '</div></td></tr>';
+  });
+  h+='</tbody></table></div></div>';
+  return h;
+}
+
+/* ---------- render ---------- */
+function toast(msg){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2800);
+}
+function render(){
+  renderNav();
+  const R={audit:pageAudit,users:pageUsers,stats:pageStats,feedback:pageFeedback};
+  $('#wrap').innerHTML=R[state.page]();
+  bind();
+}
+function bind(){
+  const op=$('#fop'),dept=$('#fdept'),kw=$('#fkw');
+  if(op)op.onchange=()=>{state.op=op.value;render()};
+  if(dept)dept.onchange=()=>{state.auditDept=dept.value;render()};
+  if(kw)kw.oninput=()=>{state.kw=kw.value;render();const n=$('#fkw');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}};
+  const userkw=$('#userkw'),usersort=$('#usersort');
+  if(userkw)userkw.oninput=()=>{state.userKw=userkw.value;render();const n=$('#userkw');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}};
+  if(usersort)usersort.onchange=()=>{state.userSort=usersort.value;render()};
+  const feedbackDept=$('#fbdept'),feedbackScore=$('#fbscore');
+  if(feedbackDept)feedbackDept.onchange=()=>{state.feedbackDept=feedbackDept.value;state.editNote=null;render()};
+  if(feedbackScore)feedbackScore.onchange=()=>{state.feedbackScore=feedbackScore.value;state.editNote=null;render()};
+  document.querySelectorAll('[data-feedback-sort]').forEach(b=>b.onclick=()=>{
+    const key=b.dataset.feedbackSort;
+    if(state.feedbackSort===key)state.feedbackDir=state.feedbackDir==='desc'?'asc':'desc';
+    else{state.feedbackSort=key;state.feedbackDir='desc'}
+    state.editNote=null;render();
+  });
+  document.querySelectorAll('[data-period]').forEach(function(b){b.onclick=function(){state.period=b.dataset.period;render()}});
+  const df=$('#dfrom'),dt=$('#dto');
+  if(df)df.onchange=function(){state.from=df.value;render()};
+  if(dt)dt.onchange=function(){state.to=dt.value;render()};
+  const sx=$('#statexport');
+  if(sx)sx.onclick=function(){toast('已建立使用統計匯出（Prototype）。匯出行為會寫入一筆稽核紀錄。')};
+  document.querySelectorAll('.rolesel').forEach(s=>s.onchange=()=>toast('角色已變更（Prototype）。成功的特權操作同樣寫入稽核紀錄。'));
+  document.querySelectorAll('.edit-note').forEach(b=>b.onclick=()=>{state.editNote=Number(b.dataset.i);render();const n=document.querySelector('.fbnote[data-i="'+b.dataset.i+'"]');if(n)n.focus()});
+  document.querySelectorAll('.save-note').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.i),n=document.querySelector('.fbnote[data-i="'+i+'"]');FEEDBACK[i].note=n?n.value.trim():'';state.editNote=null;toast('備註已儲存（Prototype）。');render()});
+}
+render();
+</script>
+</body>
+</html>
