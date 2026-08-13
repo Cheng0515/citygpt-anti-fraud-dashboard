@@ -542,11 +542,6 @@ const TOP_USERS = [
  {n:'黃思婷', d:'社會處', t:243900},
  {n:'張雅雯', d:'1999 服務中心', t:151700}
 ];
-const DEPT_USAGE = [
- {d:'1999 服務中心', q:6120, t:762000},{d:'民政處', q:5100, t:688000},
- {d:'社會處', q:4380, t:601000},{d:'工務處', q:2940, t:404000},
- {d:'建設處', q:1880, t:262000},{d:'資訊處', q:1240, t:171000}
-];
 const FEEDBACK = [
  {time:'2026-08-10T14:32:00+08:00', u:'林怡君', d:'社會處', agent:'社福資格助手', score:9, q:'社福津貼資格判斷要準備哪些文件？', c:'清單很清楚，也有附上資料來源。', note:'已請社會處確認文件清單。'},
  {time:'2026-08-10T11:18:00+08:00', u:'張雅雯', d:'1999 服務中心', agent:'1999 服務助手', score:4, q:'1999 轉接到承辦窗口時要提供哪些資料？', c:'答案只說「請留下資料」，沒有列出欄位。'},
@@ -752,14 +747,14 @@ function pageUsers(){
 /* ---------- 使用統計 ---------- */
 const STATS={
  day:{label:'日',q:742,u:186,a:9,unit:'本日',
-   dept:[{d:'1999 服務中心',q:212,t:26400},{d:'民政處',q:176,t:23100},{d:'社會處',q:148,t:20200},
-         {d:'工務處',q:101,t:13600},{d:'建設處',q:64,t:8800},{d:'資訊處',q:41,t:5700}]},
+   dept:[{d:'1999 服務中心',q:212},{d:'民政處',q:176},{d:'社會處',q:148},
+         {d:'工務處',q:101},{d:'建設處',q:64},{d:'資訊處',q:41}]},
  week:{label:'週',q:4980,u:271,a:9,unit:'本週',
-   dept:[{d:'1999 服務中心',q:1408,t:175000},{d:'民政處',q:1172,t:158000},{d:'社會處',q:1007,t:138000},
-         {d:'工務處',q:676,t:92800},{d:'建設處',q:432,t:60200},{d:'資訊處',q:285,t:39300}]},
+   dept:[{d:'1999 服務中心',q:1408},{d:'民政處',q:1172},{d:'社會處',q:1007},
+         {d:'工務處',q:676},{d:'建設處',q:432},{d:'資訊處',q:285}]},
  month:{label:'月',q:21660,u:332,a:9,unit:'近 30 日',
-   dept:[{d:'1999 服務中心',q:6120,t:762000},{d:'民政處',q:5100,t:688000},{d:'社會處',q:4380,t:601000},
-         {d:'工務處',q:2940,t:404000},{d:'建設處',q:1880,t:262000},{d:'資訊處',q:1240,t:171000}]}
+   dept:[{d:'1999 服務中心',q:6120},{d:'民政處',q:5100},{d:'社會處',q:4380},
+         {d:'工務處',q:2940},{d:'建設處',q:1880},{d:'資訊處',q:1240}]}
 };
 function pageStats(){
   const d=STATS[state.period], max=Math.max.apply(null,d.dept.map(function(x){return x.q}));
@@ -785,9 +780,9 @@ function pageStats(){
 
   h+='<div class="card"><div class="card-h"><h3>部門提問次數</h3><span class="sub">'+d.unit+'</span></div><div class="card-b">';
   d.dept.forEach(function(x){
-    h+='<div style="display:grid;grid-template-columns:130px 1fr 90px 110px;gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-soft)">'+
+    h+='<div style="display:grid;grid-template-columns:130px 1fr 90px;gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-soft)">'+
      '<div>'+x.d+'</div><div class="bar"><i style="width:'+(x.q/max*100)+'%"></i></div>'+
-     '<div class="num">'+num(x.q)+'</div><div class="num" style="color:var(--muted)">'+num(x.t)+' tk</div></div>';
+     '<div class="num">'+num(x.q)+'</div></div>';
   });
   h+='</div></div>';
   return h;
