@@ -311,7 +311,7 @@ const OP_CLASSES = [
   {id:'access',  t:'登入與准入',       d:'誰被擋在門外、誰想進後臺'},
   {id:'identity',t:'帳號與權限管理',   d:'角色異動這類特權操作，成功也要記'},
   {id:'content', t:'知識庫與代理人設定',d:'改提示詞、改開放範圍、上下架文件'},
-  {id:'data',    t:'資料匯出與查閱',   d:'誰把資料帶出去、誰查了稽核、回饋異動'},
+  {id:'data',    t:'資料存取與匯出',   d:'稽核日誌與使用統計報表的匯出紀錄'},
 ];
 const OP_MAP = Object.fromEntries(OP_CLASSES.map(o=>[o.id,o]));
 
@@ -344,7 +344,28 @@ const MSG = {
  audit_export_denied:   ['沒有權限的帳號嘗試匯出稽核紀錄，已被阻擋。','立即確認該帳號來源與操作人，並通報政風與 IT。','稽核紀錄本身是受保護資產，越權存取需列高優先追查。'],
  audit_view:            ['管理者查閱稽核紀錄。','例行紀錄，不需處理。稽核紀錄的查閱行為本身也要留存。','含查詢條件與回傳筆數。'],
  stats_export:          ['使用統計報表已匯出。','確認下載範圍是否符合縣府核可的資料範圍。','匯出欄位需與縣府確認後固定。'],
+ account_status_update: ['帳號狀態已變更。','確認本次啟用或停用是否符合人員現況。','帳號生命週期仍以 SSO／AD 為準。'],
+ disabled_login_denied: ['已停用帳號嘗試登入，系統已拒絕。','若非預期操作，請確認帳號停用狀態與來源。','IdP 回傳 disabled_account，未建立 session。'],
 };
+
+/* 管理後臺只顯示縣府確認過的固定事件名稱。未列入者保留於 IT 日誌平台。 */
+const AUDIT_EVENT_DEFS = {
+ sso_login_denied:      {name:'登入失敗', scenario:'登入驗證失敗'},
+ disabled_login_denied: {name:'登入失敗', scenario:'已停用帳號嘗試登入'},
+ admin_access_denied:   {name:'登入失敗', scenario:'未具管理權限，後臺准入被拒'},
+ admin_login_ok:        {name:'後臺登入', scenario:'管理者成功登入管理後臺'},
+ role_update_ok:        {name:'管理角色已異動', scenario:'管理者角色新增或變更'},
+ role_revoke_ok:        {name:'管理角色已異動', scenario:'管理者角色取消'},
+ account_status_update: {name:'帳號狀態已異動', scenario:'帳號啟用或停用'},
+ agent_prompt_update:   {name:'System Prompt 已修改', scenario:'System Prompt 被修改'},
+ agent_disable:         {name:'代理人狀態已異動', scenario:'代理人啟用或停用'},
+ agent_scope_expand:    {name:'代理人使用範圍已異動', scenario:'可使用代理人的人員／部門範圍變更'},
+ doc_publish:           {name:'知識庫文件已異動', scenario:'文件新增或上架'},
+ doc_unpublish:         {name:'知識庫文件已異動', scenario:'文件下架或刪除'},
+ audit_export_ok:       {name:'稽核日誌已匯出', scenario:'匯出稽核紀錄'},
+ stats_export:          {name:'統計報表已匯出', scenario:'匯出使用統計／報表'},
+};
+const auditEventDef=e=>AUDIT_EVENT_DEFS[e.msg]||null;
 
 const E = (o)=>Object.assign({
   timezone:'Asia/Taipei', application_name:'yunlin-gpt', environment:'production',
@@ -523,31 +544,62 @@ E({event_id:'82d0c15b-97a4-4e31-b06f-3c1a70e2d548', event_time:'2026-08-03T16:47
   trace_id:'5e91a0c7b234d4f68b01c72a3d0e9f15', request_id:'req_a05c71bd',
   target_type:'agent', target_id:'agt_audit_query', target_display:'稽核紀錄查詢助理',
   changed_fields:['enabled'], http_method:'PATCH', http_path:'/api/v1/agents/{agent_id}',
-  http_status_code:200, duration_ms:63, extra:{reason:'知識庫重建中，暫停對外服務'}})
+  http_status_code:200, duration_ms:63, extra:{reason:'知識庫重建中，暫停對外服務'}}),
+
+E({event_id:'9c8b134e-9ac4-4936-89c9-5b8e88e7d001', event_time:'2026-08-05T09:42:16.410+08:00',
+  op:'identity', severity:'INFO', event_type:'account_status_change', event_action:'disable_user_account',
+  outcome:'success', msg:'account_status_update',
+  actor_type:'user', actor_id:'usr_10003', actor_display:'黃品蓁', actor_dept:'社會處',
+  source_ip:'192.0.2.24', service_name:'identity-api', host_name:'identity-api-node-01',
+  trace_id:'a912fa5681404f50be7df7357cb78346', request_id:'req_81547cf0',
+  target_type:'user_account', target_id:'usr_60771', target_display:'林志偉（建設處）',
+  changed_fields:['status'], http_method:'PATCH', http_path:'/api/v1/users/{user_id}/status',
+  http_status_code:200, duration_ms:68, extra:{status_before:'active',status_after:'disabled'}}),
+
+E({event_id:'551b55d6-4603-4bdd-ad99-f0e4c346ae27', event_time:'2026-08-05T09:26:48.930+08:00',
+  op:'access', severity:'WARNING', event_type:'authentication', event_action:'sso_login',
+  outcome:'failure', msg:'disabled_login_denied', error_code:'ACCOUNT_DISABLED',
+  actor_type:'user', actor_id:'usr_60771', actor_display:'林志偉', actor_dept:'建設處',
+  source_ip:'198.51.100.52', service_name:'identity-api', host_name:'identity-api-node-02',
+  trace_id:'0bc191b323fc4100bc96585aa6e076fe', request_id:'req_c39a2d83',
+  target_type:'user_account', target_id:'usr_60771', target_display:'林志偉（建設處）',
+  http_method:'POST', http_path:'/api/v1/auth/sso/callback', http_status_code:403, duration_ms:34,
+  extra:{idp:'yunlin-adfs',idp_reason:'disabled_account'}})
 ];
 </script>
 <script>
 const USERS = [
- {id:'usr_10003', name:'黃品蓁', dept:'社會處', sso:'active',  role:'admin', last:'2026-08-06 08:12', tokens:118400},
- {id:'usr_10482', name:'王小明', dept:'民政處', sso:'active',  role:'user',  last:'2026-08-06 09:18', tokens:382400},
- {id:'usr_20117', name:'李承翰', dept:'資訊處', sso:'active',  role:'admin', last:'2026-08-06 10:12', tokens:96200},
- {id:'usr_31009', name:'黃思婷', dept:'社會處', sso:'active',  role:'user',  last:'2026-08-05 17:22', tokens:243900},
- {id:'usr_44120', name:'張雅雯', dept:'1999 服務中心', sso:'active', role:'admin', last:'2026-08-06 07:55', tokens:151700},
- {id:'usr_50882', name:'陳怡君', dept:'工務處', sso:'active',  role:'user',  last:'2026-08-06 07:58', tokens:88300},
- {id:'usr_60771', name:'林志偉', dept:'建設處', sso:'disabled',role:'user',  last:'2026-08-05 09:26', tokens:0},
- {id:'usr_31998', name:'李佳蓉', dept:'社會處', sso:'sync_error', role:'user', last:'2026-08-04 17:22', tokens:64100}
+ {id:'usr_10003', name:'黃品蓁', email:'huang.pz@yunlin.gov.tw', dept:'社會處', sso:'active',  role:'admin', last:'2026-08-06 08:12'},
+ {id:'usr_10482', name:'王小明', email:'wang.xm@yunlin.gov.tw', dept:'民政處', sso:'active',  role:'user',  last:'2026-08-06 09:18'},
+ {id:'usr_20117', name:'李承翰', email:'lee.ch@yunlin.gov.tw', dept:'資訊處', sso:'active',  role:'admin', last:'2026-08-06 10:12'},
+ {id:'usr_31009', name:'黃思婷', email:'huang.st@yunlin.gov.tw', dept:'社會處', sso:'active',  role:'user',  last:'2026-08-05 17:22'},
+ {id:'usr_44120', name:'張雅雯', email:'chang.yw@yunlin.gov.tw', dept:'1999 服務中心', sso:'active', role:'admin', last:'2026-08-06 07:55'},
+ {id:'usr_50882', name:'陳怡君', email:'chen.yj@yunlin.gov.tw', dept:'工務處', sso:'active',  role:'user',  last:'2026-08-06 07:58'},
+ {id:'usr_60771', name:'林志偉', email:'lin.zw@yunlin.gov.tw', dept:'建設處', sso:'disabled',role:'user',  last:'2026-08-05 09:26'},
+ {id:'usr_31998', name:'李佳蓉', email:'lee.jr@yunlin.gov.tw', dept:'社會處', sso:'sync_error', role:'user', last:'2026-08-04 17:22'},
+ {id:'usr_71206', name:'林怡君', email:'lin.yj@yunlin.gov.tw', dept:'社會處', sso:'active', role:'user', last:'2026-08-05 14:36'},
+ {id:'usr_73451', name:'陳志豪', email:'chen.zh@yunlin.gov.tw', dept:'建設處', sso:'active', role:'user', last:'2026-08-05 11:08'}
 ];
+const USER_BY_ID=Object.fromEntries(USERS.map(u=>[u.id,u]));
+const actorEmail=e=>(USER_BY_ID[e.actor_id]&&USER_BY_ID[e.actor_id].email)||e.actor_email||'—';
 const TOP_USERS = [
- {n:'王小明', d:'民政處', t:382400},
- {n:'黃思婷', d:'社會處', t:243900},
- {n:'張雅雯', d:'1999 服務中心', t:151700}
+ {n:'王小明', email:'wang.xm@yunlin.gov.tw', d:'民政處', q:{day:68,week:436,month:1886}},
+ {n:'黃思婷', email:'huang.st@yunlin.gov.tw', d:'社會處', q:{day:62,week:408,month:1742}},
+ {n:'張雅雯', email:'chang.yw@yunlin.gov.tw', d:'1999 服務中心', q:{day:58,week:382,month:1605}},
+ {n:'陳怡君', email:'chen.yj@yunlin.gov.tw', d:'工務處', q:{day:53,week:351,month:1498}},
+ {n:'李佳蓉', email:'lee.jr@yunlin.gov.tw', d:'社會處', q:{day:49,week:327,month:1384}},
+ {n:'李承翰', email:'lee.ch@yunlin.gov.tw', d:'資訊處', q:{day:45,week:306,month:1268}},
+ {n:'黃品蓁', email:'huang.pz@yunlin.gov.tw', d:'社會處', q:{day:42,week:284,month:1176}},
+ {n:'林志偉', email:'lin.zw@yunlin.gov.tw', d:'建設處', q:{day:39,week:263,month:1088}},
+ {n:'林怡君', email:'lin.yj@yunlin.gov.tw', d:'社會處', q:{day:36,week:241,month:1003}},
+ {n:'陳志豪', email:'chen.zh@yunlin.gov.tw', d:'建設處', q:{day:33,week:226,month:946}}
 ];
 const FEEDBACK = [
- {time:'2026-08-10T14:32:00+08:00', u:'林怡君', d:'社會處', agent:'社福資格助手', score:9, q:'社福津貼資格判斷要準備哪些文件？', c:'清單很清楚，也有附上資料來源。', note:'已請社會處確認文件清單。'},
- {time:'2026-08-10T11:18:00+08:00', u:'張雅雯', d:'1999 服務中心', agent:'1999 服務助手', score:4, q:'1999 轉接到承辦窗口時要提供哪些資料？', c:'答案只說「請留下資料」，沒有列出欄位。'},
- {time:'2026-08-09T16:45:00+08:00', u:'陳志豪', d:'建設處', agent:'建築管理助手', score:8, q:'建築執照審查通常需要幾個工作天？', c:'天數說明清楚，也有提醒實際案件可能不同。'},
- {time:'2026-08-09T09:07:00+08:00', u:'黃志明', d:'工務處', agent:'工務案件助手', score:3, q:'道路施工案件查詢不到目前進度，該怎麼處理？', c:'答案太籠統，還是不知道要去哪裡查。'},
- {time:'2026-08-08T15:26:00+08:00', u:'李佳蓉', d:'社會處', agent:'社福資格助手', score:8, q:'社會救助申請清單有分成人與兒少嗎？', c:'分類清楚，希望附上最新表單連結。'}
+ {time:'2026-08-10T14:32:00+08:00', u:'林怡君', email:'lin.yj@yunlin.gov.tw', d:'社會處', agent:'社福資格助手', score:9, q:'社福津貼資格判斷要準備哪些文件？', c:'清單很清楚，也有附上資料來源。', note:'已請社會處確認文件清單。'},
+ {time:'2026-08-10T11:18:00+08:00', u:'張雅雯', email:'chang.yw@yunlin.gov.tw', d:'1999 服務中心', agent:'1999 服務助手', score:4, q:'1999 轉接到承辦窗口時要提供哪些資料？', c:'答案只說「請留下資料」，沒有列出欄位。'},
+ {time:'2026-08-09T16:45:00+08:00', u:'陳志豪', email:'chen.zh@yunlin.gov.tw', d:'建設處', agent:'建築管理助手', score:8, q:'建築執照審查通常需要幾個工作天？', c:'天數說明清楚，也有提醒實際案件可能不同。'},
+ {time:'2026-08-09T09:07:00+08:00', u:'黃志明', email:'huang.zm@yunlin.gov.tw', d:'工務處', agent:'工務案件助手', score:3, q:'道路施工案件查詢不到目前進度，該怎麼處理？', c:'答案太籠統，還是不知道要去哪裡查。'},
+ {time:'2026-08-08T15:26:00+08:00', u:'李佳蓉', email:'lee.jr@yunlin.gov.tw', d:'社會處', agent:'社福資格助手', score:8, q:'社會救助申請清單有分成人與兒少嗎？', c:'分類清楚，希望附上最新表單連結。'}
 ];
 
 /* ---------- app ---------- */
@@ -601,26 +653,27 @@ function renderNav(){
 /* ---------- 稽核日誌 ---------- */
 function filtered(){
   return EVENTS.filter(e=>{
+    if(!auditEventDef(e))return false;
     if(state.op&&e.op!==state.op)return false;
     if(state.auditDept&&e.actor_dept!==state.auditDept)return false;
     if(state.kw){const k=state.kw.toLowerCase();
-      const hay=[e.actor_display,e.actor_dept].join(' ').toLowerCase();
+      const hay=[e.actor_display,actorEmail(e),e.actor_dept].join(' ').toLowerCase();
       if(hay.indexOf(k)<0)return false}
     return true;
-  });
+  }).sort((a,b)=>b.event_time.localeCompare(a.event_time));
 }
 function pageAudit(){
   const list=filtered(), isAdmin=state.persp==='admin';
-  const depts=[...new Set(EVENTS.map(e=>e.actor_dept))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+  const depts=[...new Set(EVENTS.filter(auditEventDef).map(e=>e.actor_dept))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
 
   let h='<div class="page-head"><div class="eyebrow">Audit trail</div><h2>稽核日誌</h2>'+
-   '<p>只記人員操作，收斂為四大類：登入與准入、帳號與權限、知識庫與代理人設定、資料匯出與查閱。系統自己的逾時、重試與基礎設施錯誤不進這裡，留在 IT 的日誌平台。</p></div>';
+   '<p>依四大行為分類顯示縣府確認過的固定事件名稱；其餘系統日誌留在 IT 日誌平台，不混入管理後臺。</p></div>';
 
 
   h+='<div class="card" style="margin-bottom:16px"><div class="card-b">'+
    '<div class="filters">'+
     '<div class="f"><label>部門</label><select id="fdept"><option value="">全部部門</option>'+depts.map(d=>'<option value="'+esc(d)+'" '+(state.auditDept===d?'selected':'')+'>'+esc(d)+'</option>').join('')+'</select></div>'+
-    '<div class="f"><label>搜尋</label><input id="fkw" placeholder="搜尋人名或部門" value="'+esc(state.kw)+'"></div>'+
+    '<div class="f"><label>搜尋</label><input id="fkw" placeholder="搜尋姓名、Email 或部門" value="'+esc(state.kw)+'"></div>'+ 
     '<div class="f"><label>行為分類</label><select id="fop"><option value="">全部行為</option>'+OP_CLASSES.map(o=>'<option value="'+o.id+'" '+(state.op===o.id?'selected':'')+'>'+o.t+'</option>').join('')+'</select></div>'+
    '</div></div></div>';
 
@@ -629,25 +682,24 @@ function pageAudit(){
 
   h+='<div class="scroll"><table class="tbl"><thead><tr>'+
    (isAdmin
-    ? '<th style="width:150px">時間</th><th style="width:190px">操作者</th><th>做了什麼</th><th style="width:110px">結果</th>'
+    ? '<th style="width:150px">時間</th><th style="width:280px">操作者</th><th>做了什麼</th>'
     : '<th style="width:92px">severity</th><th style="width:150px">event_time</th><th style="width:130px">actor_id</th><th>event_action / error_code</th><th style="width:70px" class="num">status</th><th style="width:78px" class="num">ms</th><th style="width:170px">trace_id</th>')+
    '</tr></thead><tbody>';
 
-  if(!list.length) h+='<tr><td colspan="'+(isAdmin?4:7)+'" style="padding:32px;text-align:center;color:var(--muted)">沒有符合條件的事件。請調整篩選條件或清空關鍵字再試一次。</td></tr>';
+  if(!list.length) h+='<tr><td colspan="'+(isAdmin?3:7)+'" style="padding:32px;text-align:center;color:var(--muted)">沒有符合條件的事件。請調整篩選條件或清空關鍵字再試一次。</td></tr>';
 
   list.forEach(e=>{
-    const on=state.sel===e.event_id, op=OP_MAP[e.op]||{};
+    const on=state.sel===e.event_id, op=OP_MAP[e.op]||{}, eventDef=auditEventDef(e);
     if(isAdmin){
       h+='<tr data-id="'+e.event_id+'" class="'+(on?'sel':'')+'">'+
-       '<td class="m">'+fmtTime(e.event_time)+'</td>'+
-       '<td><div class="t">'+esc(e.actor_display)+'</div><div class="m">'+esc(e.actor_dept)+'</div></td>'+
-       '<td><div class="t">'+esc(op.t)+'</div></td>'+
-       '<td>'+(e.outcome==='success'?'<span class="pill ok">成功</span>':'<span class="pill bad">被擋</span>')+'</td></tr>';
+       '<td class="m">'+fmtTime(e.event_time)+'</td>'+ 
+       '<td><div class="t">'+esc(e.actor_display)+'</div><div class="m">'+esc(actorEmail(e))+'</div><div class="m">'+esc(e.actor_dept)+'</div></td>'+ 
+       '<td><div class="t">'+esc(op.t)+'</div><div class="m">'+esc(eventDef.name)+'</div></td></tr>';
     }else{
       h+='<tr data-id="'+e.event_id+'" class="'+(on?'sel':'')+'">'+
        '<td>'+sevTag(e.severity)+'</td>'+
        '<td class="m">'+fmtTime(e.event_time,1)+'</td>'+
-       '<td class="m">'+e.actor_id+'<div>'+e.actor_type+'</div></td>'+
+       '<td class="m">'+e.actor_id+'<div>'+esc(actorEmail(e))+'</div><div>'+e.actor_type+'</div></td>'+ 
        '<td><div class="m" style="color:var(--text);font-weight:600">'+e.event_action+'</div>'+
          '<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">'+
          (e.error_code?'<span class="code err">'+e.error_code+'</span>':'<span class="code ok">outcome: success</span>')+
@@ -689,7 +741,7 @@ function detailPanel(e){
       '<p class="say">'+esc(M(e,0))+'</p>'+
       '<div class="doblock"><div class="k">建議處理</div><p>'+esc(M(e,1))+'</p></div>'+
       '<dl class="kv">'+
-        '<dt>操作者</dt><dd>'+esc(e.actor_display)+'　'+esc(e.actor_dept)+'</dd>'+
+        '<dt>操作者</dt><dd>'+esc(e.actor_display)+'　'+esc(actorEmail(e))+'　'+esc(e.actor_dept)+'</dd>'+ 
         '<dt>對象</dt><dd>'+esc(e.target_display)+'</dd>'+
         '<dt>結果</dt><dd>'+(e.outcome==='success'?'成功':'失敗／被擋下')+'</dd>'+
         '<dt>來源 IP</dt><dd class="m">'+e.source_ip+'</dd>'+
@@ -711,7 +763,7 @@ function detailPanel(e){
 function pageUsers(){
   const S={active:['SSO 有效','ok'],disabled:['SSO 停用','bad'],sync_error:['同步異常','warn']};
   const keyword=state.userKw.trim().toLowerCase();
-  const list=USERS.filter(u=>!keyword||[u.name,u.id,u.dept].join(' ').toLowerCase().includes(keyword)).slice();
+  const list=USERS.filter(u=>!keyword||[u.name,u.email,u.id,u.dept].join(' ').toLowerCase().includes(keyword)).slice();
   const roleRank={admin:0,user:1};
   list.sort((a,b)=>{
     if(state.userSort==='dept')return a.dept.localeCompare(b.dept,'zh-Hant')||a.name.localeCompare(b.name,'zh-Hant');
@@ -723,7 +775,7 @@ function pageUsers(){
    '<p>帳號與部門由 SSO／AD 帶入，本後臺只決定誰是管理者。任何角色異動——成功或失敗——都會寫進稽核日誌。</p></div>';
   h+='<div class="card"><div class="card-h"><h3>SSO 使用者清單</h3><span class="sub">'+USERS.length+' 人</span>'+
    '</div><div class="card-b" style="padding-bottom:14px"><div class="filters" style="grid-template-columns:minmax(280px,2fr) minmax(180px,1fr)">'+
-   '<div class="f"><label>搜尋使用者</label><input id="userkw" placeholder="搜尋姓名、使用者編號或部門" value="'+esc(state.userKw)+'"></div>'+
+   '<div class="f"><label>搜尋使用者</label><input id="userkw" placeholder="搜尋姓名、Email、使用者編號或部門" value="'+esc(state.userKw)+'"></div>'+ 
    '<div class="f"><label>排序方式</label><select id="usersort">'+
    '<option value="name" '+(state.userSort==='name'?'selected':'')+'>姓名</option>'+
    '<option value="dept" '+(state.userSort==='dept'?'selected':'')+'>部門</option>'+
@@ -734,7 +786,7 @@ function pageUsers(){
    '<th>使用者</th><th style="width:150px">部門</th><th style="width:110px">SSO 狀態</th><th style="width:170px">最後登入</th><th style="width:170px">後臺角色</th></tr></thead><tbody>';
   if(!list.length)h+='<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--muted)">找不到符合條件的使用者，請更換關鍵字。</td></tr>';
   list.forEach(u=>{
-    h+='<tr style="cursor:default"><td><div class="t">'+u.name+'</div><div class="m">'+u.id+'</div></td>'+
+    h+='<tr style="cursor:default"><td><div class="t">'+esc(u.name)+'</div><div class="m">'+esc(u.email)+'</div><div class="m">'+esc(u.id)+'</div></td>'+ 
      '<td>'+u.dept+'</td><td><span class="pill '+S[u.sso][1]+'">'+S[u.sso][0]+'</span></td>'+
      '<td class="m">'+u.last+'</td>'+
      '<td><select class="rolesel" data-u="'+u.id+'"><option value="user" '+(u.role==='user'?'selected':'')+'>一般使用者</option><option value="admin" '+(u.role==='admin'?'selected':'')+'>管理者</option></select></td></tr>';
@@ -785,6 +837,16 @@ function pageStats(){
      '<div class="num">'+num(x.q)+'</div></div>';
   });
   h+='</div></div>';
+
+  const ranked=TOP_USERS.slice().sort(function(a,b){return b.q[state.period]-a.q[state.period]});
+  h+='<div class="card" style="margin-top:16px"><div class="card-h"><h3>個人提問次數前 10 名</h3><span class="sub">'+d.unit+'</span></div>'+ 
+   '<div class="scroll"><table class="tbl"><thead><tr><th style="width:76px">排名</th><th>使用者</th><th style="width:180px">部門</th><th style="width:150px" class="num">提問次數</th></tr></thead><tbody>';
+  ranked.forEach(function(x,i){
+    h+='<tr style="cursor:default"><td class="num">'+(i+1)+'</td>'+ 
+     '<td><div class="t">'+esc(x.n)+'</div><div class="m">'+esc(x.email)+'</div></td>'+ 
+     '<td>'+esc(x.d)+'</td><td class="num">'+num(x.q[state.period])+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';
   return h;
 }
 
@@ -821,7 +883,7 @@ function pageFeedback(){
   if(!rows.length)h+='<tr><td colspan="6" style="padding:32px;text-align:center;color:var(--muted)">找不到符合條件的回饋。</td></tr>';
   rows.forEach(({f,i})=>{
     const editing=state.editNote===i;
-    h+='<tr style="cursor:default"><td><div class="t">'+showTime(f.time)+'</div></td><td><div class="t">'+f.u+'</div><div class="m">'+f.d+'</div></td>'+
+    h+='<tr style="cursor:default"><td><div class="t">'+showTime(f.time)+'</div></td><td><div class="t">'+esc(f.u)+'</div><div class="m">'+esc(f.email)+'</div><div class="m">'+esc(f.d)+'</div></td>'+ 
      '<td>'+f.agent+'</td><td class="num"><span class="pill '+(f.score>=7?'ok':'bad')+'">'+f.score+'</span></td>'+
      '<td><div class="t">'+esc(f.q)+'</div><div class="m" style="margin-top:3px">'+esc(f.c)+'</div></td>'+
      '<td><div class="note-editor">'+
